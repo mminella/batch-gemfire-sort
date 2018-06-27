@@ -15,24 +15,18 @@
  */
 package io.spring.batch.configuration;
 
-import java.io.IOException;
+import io.spring.batch.batch.SortFileItemReader;
 
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
-import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.partition.support.MultiResourcePartitioner;
 import org.springframework.batch.core.partition.support.TaskExecutorPartitionHandler;
-import org.springframework.batch.item.file.FlatFileItemReader;
-import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 
 /**
@@ -53,7 +47,7 @@ public class BatchConfiguration {
 	@Bean
 	public Job job() throws Exception {
 		return this.jobBuilderFactory.get("sortJob")
-				.start(step1())
+				.start(workerStep())
 				.build();
 	}
 
@@ -80,15 +74,20 @@ public class BatchConfiguration {
 	public Step workerStep() {
 		return this.stepBuilderFactory.get("workerStep")
 				.chunk(10000)
-				.reader()
-				.writer()
+				.reader(reader())
+				.writer(items -> {
+					items.forEach(System.out::println);
+				})
 				.build();
 	}
 
 	@Bean
-	@StepScope
-	public FlatFileItemReader<Item> reader(@Value("#{stepExecutionContext['fileName']}") Resource inputFile) {
-		return new FlatFileItemReaderBuilder<Item>()
-				.;
+	public SortFileItemReader reader() {
+		SortFileItemReader reader = new SortFileItemReader();
+
+		reader.setName("reader");
+		reader.setResource(applicationContext.getResource("classpath:data/test"));
+
+		return reader;
 	}
 }
