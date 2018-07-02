@@ -15,25 +15,31 @@
  */
 package io.spring.batch.configuration;
 
+import java.util.Arrays;
+
 import io.spring.batch.batch.CountingItemWriter;
+import io.spring.batch.batch.GemfireCountTasklet;
 import io.spring.batch.batch.SortFileItemReader;
 import io.spring.batch.domain.Item;
-import org.apache.geode.internal.cache.LocalRegion;
 
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.partition.support.MultiResourcePartitioner;
 import org.springframework.batch.core.partition.support.TaskExecutorPartitionHandler;
 import org.springframework.batch.item.data.GemfireItemWriter;
 import org.springframework.batch.item.data.builder.GemfireItemWriterBuilder;
+import org.springframework.batch.item.support.CompositeItemWriter;
+import org.springframework.batch.item.support.builder.CompositeItemWriterBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.data.gemfire.GemfireTemplate;
+import org.springframework.data.gemfire.mapping.annotation.Region;
 
 /**
  * @author Michael Minella
@@ -54,6 +60,14 @@ public class BatchConfiguration {
 	public Job job() throws Exception {
 		return this.jobBuilderFactory.get("sortJob")
 				.start(workerStep())
+				.next(validationStep(null))
+				.build();
+	}
+
+	@Bean
+	public Step validationStep(GemfireCountTasklet tasklet) {
+		return this.stepBuilderFactory.get("validationStep")
+				.tasklet(tasklet)
 				.build();
 	}
 
@@ -81,7 +95,7 @@ public class BatchConfiguration {
 		return this.stepBuilderFactory.get("workerStep")
 				.<Item, Item>chunk(1050000)
 				.reader(reader())
-				.writer(new CountingItemWriter())
+				.writer(itemWriter())
 				.build();
 	}
 
@@ -96,6 +110,15 @@ public class BatchConfiguration {
 	}
 
 	@Bean
+	@StepScope
+	public CompositeItemWriter<Item> itemWriter() {
+		return new CompositeItemWriterBuilder<Item>()
+				.delegates(Arrays.asList(new CountingItemWriter(), gemfireItemWriter(null)))
+				.build();
+	}
+
+	@Bean
+	@StepScope
 	public GemfireItemWriter<byte[], Item> gemfireItemWriter(GemfireTemplate template) {
 		return new GemfireItemWriterBuilder<byte[], Item>()
 				.itemKeyMapper(Item::getKey)
@@ -104,9 +127,8 @@ public class BatchConfiguration {
 	}
 
 	@Bean
-	public GemfireTemplate gemfireTemplate () {
-		LocalRegion region = new LocalRegion();
-
+	@StepScope
+	public GemfireTemplate gemfireTemplate (org.apache.geode.cache.Region region) {
 		GemfireTemplate template = new GemfireTemplate(region);
 
 		return template;
