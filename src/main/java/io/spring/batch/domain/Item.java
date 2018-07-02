@@ -17,14 +17,21 @@ package io.spring.batch.domain;
 
 import javax.xml.bind.DatatypeConverter;
 
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.PersistenceConstructor;
+import org.springframework.data.gemfire.mapping.annotation.Region;
+
 /**
  * @author Michael Minella
  */
+@Region("Items")
 public class Item {
 
+	@Id
 	private final byte[] key;
 	private final byte[] record;
 
+	@PersistenceConstructor
 	public Item(byte[] key, byte[] record) {
 		this.key = key;
 		this.record = record;

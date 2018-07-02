@@ -15,7 +15,10 @@
  */
 package io.spring.batch.configuration;
 
+import io.spring.batch.batch.CountingItemWriter;
 import io.spring.batch.batch.SortFileItemReader;
+import io.spring.batch.domain.Item;
+import org.apache.geode.internal.cache.LocalRegion;
 
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
@@ -23,11 +26,14 @@ import org.springframework.batch.core.configuration.annotation.JobBuilderFactory
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.partition.support.MultiResourcePartitioner;
 import org.springframework.batch.core.partition.support.TaskExecutorPartitionHandler;
+import org.springframework.batch.item.data.GemfireItemWriter;
+import org.springframework.batch.item.data.builder.GemfireItemWriterBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
+import org.springframework.data.gemfire.GemfireTemplate;
 
 /**
  * @author Michael Minella
@@ -56,7 +62,7 @@ public class BatchConfiguration {
 
 		MultiResourcePartitioner multiResourcePartitioner = new MultiResourcePartitioner();
 		multiResourcePartitioner.setKeyName("partition");
-		multiResourcePartitioner.setResources(applicationContext.getResources("file://data/part*"));
+		multiResourcePartitioner.setResources(applicationContext.getResources("classpath:data/part*"));
 
 		TaskExecutorPartitionHandler partitionHandler = new TaskExecutorPartitionHandler();
 		partitionHandler.setStep(workerStep());
@@ -73,11 +79,9 @@ public class BatchConfiguration {
 	@Bean
 	public Step workerStep() {
 		return this.stepBuilderFactory.get("workerStep")
-				.chunk(10000)
+				.<Item, Item>chunk(1050000)
 				.reader(reader())
-				.writer(items -> {
-					items.forEach(System.out::println);
-				})
+				.writer(new CountingItemWriter())
 				.build();
 	}
 
@@ -86,8 +90,25 @@ public class BatchConfiguration {
 		SortFileItemReader reader = new SortFileItemReader();
 
 		reader.setName("reader");
-		reader.setResource(applicationContext.getResource("classpath:data/test"));
+		reader.setResource(applicationContext.getResource("classpath:data/part0"));
 
 		return reader;
+	}
+
+	@Bean
+	public GemfireItemWriter<byte[], Item> gemfireItemWriter(GemfireTemplate template) {
+		return new GemfireItemWriterBuilder<byte[], Item>()
+				.itemKeyMapper(Item::getKey)
+				.template(template)
+				.build();
+	}
+
+	@Bean
+	public GemfireTemplate gemfireTemplate () {
+		LocalRegion region = new LocalRegion();
+
+		GemfireTemplate template = new GemfireTemplate(region);
+
+		return template;
 	}
 }
