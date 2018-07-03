@@ -1,12 +1,12 @@
 /**
  * Copyright 2018 the original author or authors.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,13 +15,11 @@
  */
 package io.spring.batch.configuration;
 
-import java.util.Arrays;
-
 import io.spring.batch.batch.CountingItemWriter;
 import io.spring.batch.batch.GemfireCountTasklet;
 import io.spring.batch.batch.SortFileItemReader;
 import io.spring.batch.domain.Item;
-
+import org.apache.geode.cache.Region;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
@@ -39,7 +37,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.data.gemfire.GemfireTemplate;
-import org.springframework.data.gemfire.mapping.annotation.Region;
+
+import java.util.Arrays;
 
 /**
  * @author Michael Minella
@@ -58,17 +57,12 @@ public class BatchConfiguration {
 
 	@Bean
 	public Job job() throws Exception {
-		return this.jobBuilderFactory.get("sortJob")
-				.start(workerStep())
-				.next(validationStep(null))
-				.build();
+		return this.jobBuilderFactory.get("sortJob").start(workerStep()).next(validationStep(null)).build();
 	}
 
 	@Bean
 	public Step validationStep(GemfireCountTasklet tasklet) {
-		return this.stepBuilderFactory.get("validationStep")
-				.tasklet(tasklet)
-				.build();
+		return this.stepBuilderFactory.get("validationStep").tasklet(tasklet).build();
 	}
 
 	@Bean
@@ -83,20 +77,18 @@ public class BatchConfiguration {
 		partitionHandler.setTaskExecutor(new SimpleAsyncTaskExecutor());
 
 		return this.stepBuilderFactory.get("sortStep")
-				.partitioner("workerStep", multiResourcePartitioner)
-				.partitionHandler(partitionHandler)
-				.gridSize(10)
-				.taskExecutor(new SimpleAsyncTaskExecutor())
-				.build();
+			.partitioner("workerStep", multiResourcePartitioner)
+			.partitionHandler(partitionHandler)
+			.gridSize(10)
+			.taskExecutor(new SimpleAsyncTaskExecutor())
+			.build();
 	}
 
 	@Bean
 	public Step workerStep() {
-		return this.stepBuilderFactory.get("workerStep")
-				.<Item, Item>chunk(1050000)
-				.reader(reader())
-				.writer(itemWriter())
-				.build();
+		return this.stepBuilderFactory.get("workerStep").<Item, Item>chunk(1050000).reader(reader())
+			.writer(itemWriter())
+			.build();
 	}
 
 	@Bean
@@ -112,23 +104,19 @@ public class BatchConfiguration {
 	@Bean
 	@StepScope
 	public CompositeItemWriter<Item> itemWriter() {
-		return new CompositeItemWriterBuilder<Item>()
-				.delegates(Arrays.asList(new CountingItemWriter(), gemfireItemWriter(null)))
-				.build();
+		return new CompositeItemWriterBuilder<Item>().delegates(
+			Arrays.asList(new CountingItemWriter(), gemfireItemWriter(null))).build();
 	}
 
 	@Bean
 	@StepScope
 	public GemfireItemWriter<byte[], Item> gemfireItemWriter(GemfireTemplate template) {
-		return new GemfireItemWriterBuilder<byte[], Item>()
-				.itemKeyMapper(Item::getKey)
-				.template(template)
-				.build();
+		return new GemfireItemWriterBuilder<byte[], Item>().itemKeyMapper(Item::getKey).template(template).build();
 	}
 
 	@Bean
 	@StepScope
-	public GemfireTemplate gemfireTemplate (org.apache.geode.cache.Region region) {
+	public GemfireTemplate gemfireTemplate(Region region) {
 		GemfireTemplate template = new GemfireTemplate(region);
 
 		return template;
