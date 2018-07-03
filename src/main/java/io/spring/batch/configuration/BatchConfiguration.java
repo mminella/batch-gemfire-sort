@@ -25,6 +25,7 @@ import io.spring.batch.batch.GemfireCountTasklet;
 import io.spring.batch.batch.SortFileItemReader;
 import io.spring.batch.domain.Item;
 
+import org.apache.geode.pdx.PdxSerializer;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
@@ -39,6 +40,7 @@ import org.springframework.batch.item.data.GemfireItemWriter;
 import org.springframework.batch.item.data.builder.GemfireItemWriterBuilder;
 import org.springframework.batch.item.support.CompositeItemWriter;
 import org.springframework.batch.item.support.builder.CompositeItemWriterBuilder;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.deployer.resource.support.DelegatingResourceLoader;
 import org.springframework.cloud.deployer.spi.task.TaskLauncher;
@@ -56,6 +58,7 @@ import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.data.gemfire.GemfireTemplate;
 import org.springframework.data.gemfire.config.annotation.EnableEntityDefinedRegions;
 import org.springframework.data.gemfire.config.annotation.PeerCacheApplication;
+import org.springframework.data.gemfire.mapping.MappingPdxSerializer;
 
 /**
  * @author Michael Minella
@@ -134,10 +137,15 @@ public class BatchConfiguration {
 	}
 
 	@Profile("worker")
-	@PeerCacheApplication
-	@EnableEntityDefinedRegions
 	@Configuration
 	public static class WorkerConfiguration {
+
+		@Bean
+		public PdxSerializer pdxSerializer() {
+			MappingPdxSerializer mappingPdxSerializer = new MappingPdxSerializer();
+			//mappingPdxSerializer.
+			return mappingPdxSerializer;
+		}
 
 		@Bean
 		public DeployerStepExecutionHandler stepExecutionHandler(ApplicationContext context, JobExplorer jobExplorer, JobRepository jobRepository) {

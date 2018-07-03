@@ -21,11 +21,13 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceConstructor;
 import org.springframework.data.gemfire.mapping.annotation.Region;
 
+import java.io.Serializable;
+
 /**
  * @author Michael Minella
  */
 @Region("Items")
-public class Item {
+public class Item implements Serializable {
 
 	@Id
 	private final byte[] key;
