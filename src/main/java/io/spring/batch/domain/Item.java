@@ -27,7 +27,7 @@ import java.io.Serializable;
  * @author Michael Minella
  */
 @Region("Items")
-public class Item implements Serializable {
+public class Item {
 
 	@Id
 	private final byte[] key;

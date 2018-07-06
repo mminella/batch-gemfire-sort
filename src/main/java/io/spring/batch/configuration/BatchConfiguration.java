@@ -131,12 +131,6 @@ public class BatchConfiguration {
 		@Autowired
 		GemfireTemplate gemfireTemplate;
 
-		@Bean
-		public PdxSerializer pdxSerializer() {
-			MappingPdxSerializer mappingPdxSerializer = new MappingPdxSerializer();
-			//mappingPdxSerializer.
-			return mappingPdxSerializer;
-		}
 
 		@Bean
 		public DeployerStepExecutionHandler stepExecutionHandler(ApplicationContext context, JobExplorer jobExplorer,
