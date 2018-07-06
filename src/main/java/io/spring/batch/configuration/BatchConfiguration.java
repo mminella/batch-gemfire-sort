@@ -140,6 +140,9 @@ public class BatchConfiguration {
 	@Configuration
 	public static class WorkerConfiguration {
 
+		@Autowired
+		GemfireTemplate gemfireTemplate;
+
 		@Bean
 		public PdxSerializer pdxSerializer() {
 			MappingPdxSerializer mappingPdxSerializer = new MappingPdxSerializer();
@@ -195,18 +198,11 @@ public class BatchConfiguration {
 					.build();
 		}
 
-		@Bean
-		@StepScope
-		public GemfireTemplate gemfireTemplate (org.apache.geode.cache.Region region) {
-			GemfireTemplate template = new GemfireTemplate(region);
-
-			return template;
-		}
 
 		@Bean
 		@StepScope
 		public GemfireCountTasklet tasklet() {
-			return new GemfireCountTasklet(gemfireTemplate(null));
+			return new GemfireCountTasklet(gemfireTemplate);
 		}
 
 	}
