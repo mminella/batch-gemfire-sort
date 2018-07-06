@@ -1,11 +1,9 @@
 package io.spring.batch;
 
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.task.configuration.EnableTask;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -21,12 +19,7 @@ import java.util.Properties;
 @EnableTask
 @EnableBatchProcessing
 @SpringBootApplication
-@PeerCacheApplication
-@EnableEntityDefinedRegions
 public class BatchGemfireFileSortApplication {
-
-	@Autowired
-	ApplicationContext context;
 
 	public static void main(String[] args) {
 		Properties properties = System.getProperties();

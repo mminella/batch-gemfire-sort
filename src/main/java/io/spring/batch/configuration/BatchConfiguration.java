@@ -1,12 +1,12 @@
 /**
  * Copyright 2018 the original author or authors.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,16 +15,10 @@
  */
 package io.spring.batch.configuration;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import io.spring.batch.batch.CountingItemWriter;
 import io.spring.batch.batch.GemfireCountTasklet;
 import io.spring.batch.batch.SortFileItemReader;
 import io.spring.batch.domain.Item;
-
 import org.apache.geode.pdx.PdxSerializer;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
@@ -56,9 +50,12 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.data.gemfire.GemfireTemplate;
-import org.springframework.data.gemfire.config.annotation.EnableEntityDefinedRegions;
-import org.springframework.data.gemfire.config.annotation.PeerCacheApplication;
 import org.springframework.data.gemfire.mapping.MappingPdxSerializer;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Michael Minella
@@ -71,20 +68,17 @@ public class BatchConfiguration {
 	public static class MasterConfiguration {
 
 		@Bean
-		public Step master(StepBuilderFactory stepBuilderFactory,
-				Partitioner partitioner,
-				PartitionHandler partitionHandler) {
+		public Step master(StepBuilderFactory stepBuilderFactory, Partitioner partitioner,
+			PartitionHandler partitionHandler) {
 			return stepBuilderFactory.get("master")
-					.partitioner("workerStep", partitioner)
-					.partitionHandler(partitionHandler)
-					.build();
+				.partitioner("workerStep", partitioner)
+				.partitionHandler(partitionHandler)
+				.build();
 		}
 
 		@Bean
 		public Job batchGemfireSort(JobBuilderFactory jobBuilderFactory) throws Exception {
-			return jobBuilderFactory.get("batchGemfireSort")
-					.start(master(null, null, null))
-					.build();
+			return jobBuilderFactory.get("batchGemfireSort").start(master(null, null, null)).build();
 		}
 
 		@Bean
@@ -112,20 +106,14 @@ public class BatchConfiguration {
 		}
 
 		@Bean
-		public DeployerPartitionHandler partitionHandler(
-				@Value("${spring.application.name}") String applicationName,
-				DelegatingResourceLoader resourceLoader,
-				TaskLauncher taskLauncher,
-				JobExplorer jobExplorer,
-				CommandLineArgsProvider commandLineArgsProvider) {
+		public DeployerPartitionHandler partitionHandler(@Value("${spring.application.name}") String applicationName,
+			DelegatingResourceLoader resourceLoader, TaskLauncher taskLauncher, JobExplorer jobExplorer,
+			CommandLineArgsProvider commandLineArgsProvider) {
 
 			Resource resource = resourceLoader.getResource("maven://io.spring:batch-gemfire-file-sort:0.0.1-SNAPSHOT");
 
-			DeployerPartitionHandler partitionHandler =
-					new DeployerPartitionHandler(taskLauncher,
-							jobExplorer,
-							resource,
-							"workerStep");
+			DeployerPartitionHandler partitionHandler = new DeployerPartitionHandler(taskLauncher, jobExplorer,
+				resource, "workerStep");
 
 			partitionHandler.setCommandLineArgsProvider(commandLineArgsProvider);
 			partitionHandler.setEnvironmentVariablesProvider(new NoOpEnvironmentVariablesProvider());
@@ -151,22 +139,21 @@ public class BatchConfiguration {
 		}
 
 		@Bean
-		public DeployerStepExecutionHandler stepExecutionHandler(ApplicationContext context, JobExplorer jobExplorer, JobRepository jobRepository) {
+		public DeployerStepExecutionHandler stepExecutionHandler(ApplicationContext context, JobExplorer jobExplorer,
+			JobRepository jobRepository) {
 			return new DeployerStepExecutionHandler(context, jobExplorer, jobRepository);
 		}
 
 		@Bean
 		public Step workerStep(StepBuilderFactory stepBuilderFactory) {
-			return stepBuilderFactory.get("workerStep")
-					.<Item, Item>chunk(1050000)
-					.reader(reader(null))
-					.writer(itemWriter())
-					.build();
+			return stepBuilderFactory.get("workerStep").<Item, Item>chunk(1050000).reader(reader(null))
+				.writer(itemWriter())
+				.build();
 		}
 
 		@Bean
 		@StepScope
-		public SortFileItemReader reader(@Value("#{stepExecutionContext['fileName']}")Resource file) {
+		public SortFileItemReader reader(@Value("#{stepExecutionContext['fileName']}") Resource file) {
 			SortFileItemReader reader = new SortFileItemReader();
 
 			reader.setName("reader");
@@ -177,27 +164,20 @@ public class BatchConfiguration {
 
 		@Bean
 		public CompositeItemWriter<Item> itemWriter() {
-			return new CompositeItemWriterBuilder<Item>()
-					.delegates(Arrays.asList(new CountingItemWriter(), gemfireItemWriter(null)))
-					.build();
+			return new CompositeItemWriterBuilder<Item>().delegates(
+				Arrays.asList(new CountingItemWriter(), gemfireItemWriter(null))).build();
 		}
 
 		@Bean
 		@StepScope
 		public GemfireItemWriter<byte[], Item> gemfireItemWriter(GemfireTemplate template) {
-			return new GemfireItemWriterBuilder<byte[], Item>()
-					.itemKeyMapper(Item::getKey)
-					.template(template)
-					.build();
+			return new GemfireItemWriterBuilder<byte[], Item>().itemKeyMapper(Item::getKey).template(template).build();
 		}
 
 		@Bean
 		public Step validationStep(StepBuilderFactory stepBuilderFactory, GemfireCountTasklet tasklet) {
-			return stepBuilderFactory.get("validationStep")
-					.tasklet(tasklet)
-					.build();
+			return stepBuilderFactory.get("validationStep").tasklet(tasklet).build();
 		}
-
 
 		@Bean
 		@StepScope
