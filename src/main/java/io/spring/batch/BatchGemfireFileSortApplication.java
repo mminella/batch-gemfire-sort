@@ -38,38 +38,5 @@ public class BatchGemfireFileSortApplication {
 
 		SpringApplication.run(BatchGemfireFileSortApplication.class, newArgs.toArray(new String[newArgs.size()]));
 	}
-
-	@Configuration
-	@Profile("worker")
-	@PeerCacheApplication
-	@EnableEntityDefinedRegions
-	@EnablePdx(serializerBeanName = "pdxSerializer")
-	public static class GemfireConfiguration {
-
-		@Bean
-		public GemfireTemplate gemfireTemplate(org.apache.geode.cache.Region region) {
-			GemfireTemplate template = new GemfireTemplate(region);
-
-			return template;
-		}
-
-		@Bean
-		public PdxSerializer pdxSerializer() {
-			return new PdxSerializer() {
-
-				@Override
-				public boolean toData(Object item, PdxWriter pdxWriter) {
-					pdxWriter.writeByteArray("key", ((Item) item).getKey());
-					pdxWriter.writeByteArray("record", ((Item) item).getRecord());
-					return true;
-				}
-
-				@Override
-				public Object fromData(Class<?> clazz, PdxReader pdxReader) {
-					return new Item(pdxReader.readByteArray("key"), pdxReader.readByteArray("record"));
-				}
-			};
-		}
-	}
 }
 

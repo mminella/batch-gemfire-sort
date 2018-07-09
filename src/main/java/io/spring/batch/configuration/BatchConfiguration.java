@@ -19,7 +19,10 @@ import io.spring.batch.batch.CountingItemWriter;
 import io.spring.batch.batch.GemfireCountTasklet;
 import io.spring.batch.batch.SortFileItemReader;
 import io.spring.batch.domain.Item;
+import org.apache.geode.cache.Region;
+import org.apache.geode.pdx.PdxReader;
 import org.apache.geode.pdx.PdxSerializer;
+import org.apache.geode.pdx.PdxWriter;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
@@ -34,7 +37,6 @@ import org.springframework.batch.item.data.GemfireItemWriter;
 import org.springframework.batch.item.data.builder.GemfireItemWriterBuilder;
 import org.springframework.batch.item.support.CompositeItemWriter;
 import org.springframework.batch.item.support.builder.CompositeItemWriterBuilder;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.deployer.resource.support.DelegatingResourceLoader;
 import org.springframework.cloud.deployer.spi.task.TaskLauncher;
@@ -50,7 +52,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.data.gemfire.GemfireTemplate;
-import org.springframework.data.gemfire.mapping.MappingPdxSerializer;
+import org.springframework.data.gemfire.config.annotation.EnableEntityDefinedRegions;
+import org.springframework.data.gemfire.config.annotation.EnablePdx;
+import org.springframework.data.gemfire.config.annotation.PeerCacheApplication;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -126,11 +130,35 @@ public class BatchConfiguration {
 
 	@Profile("worker")
 	@Configuration
+	@PeerCacheApplication
+	@EnableEntityDefinedRegions(basePackageClasses = Item.class)
+	@EnablePdx(serializerBeanName = "pdxSerializer")
 	public static class WorkerConfiguration {
 
-		@Autowired
-		GemfireTemplate gemfireTemplate;
+		@Bean
+		public GemfireTemplate gemfireTemplate(Region<?,?> region) {
+			GemfireTemplate template = new GemfireTemplate(region);
 
+			return template;
+		}
+
+		@Bean
+		public PdxSerializer pdxSerializer() {
+			return new PdxSerializer() {
+
+				@Override
+				public boolean toData(Object item, PdxWriter pdxWriter) {
+					pdxWriter.writeByteArray("key", ((Item) item).getKey());
+					pdxWriter.writeByteArray("record", ((Item) item).getRecord());
+					return true;
+				}
+
+				@Override
+				public Object fromData(Class<?> clazz, PdxReader pdxReader) {
+					return new Item(pdxReader.readByteArray("key"), pdxReader.readByteArray("record"));
+				}
+			};
+		}
 
 		@Bean
 		public DeployerStepExecutionHandler stepExecutionHandler(ApplicationContext context, JobExplorer jobExplorer,
@@ -176,7 +204,7 @@ public class BatchConfiguration {
 		@Bean
 		@StepScope
 		public GemfireCountTasklet tasklet() {
-			return new GemfireCountTasklet(gemfireTemplate);
+			return new GemfireCountTasklet(gemfireTemplate(null));
 		}
 
 	}
