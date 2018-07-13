@@ -18,6 +18,7 @@ public class BatchGemfireFileSortApplication {
 	public static void main(String[] args) {
 		Properties properties = System.getProperties();
 		properties.put("spring.profiles.active", "master");
+		properties.put("spring.cloud.deployer.local.deleteFilesOnExit", "false");
 
 		List<String> newArgs = new ArrayList<>(args.length + 1);
 

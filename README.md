@@ -35,3 +35,9 @@ cat out0.sum out1.sum out2.sum out3.sum out4.sum out5.sum out6.sum out7.sum out8
 valsort -s all.sum 
 ```
 
+# TODO
+1. Write file from local partition.
+2. Upload files to S3.
+3. Download input files from S3.
+4. Run on PCF
+5. Scale up

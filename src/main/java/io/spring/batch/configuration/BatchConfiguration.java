@@ -15,14 +15,22 @@
  */
 package io.spring.batch.configuration;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import io.spring.batch.batch.CountingItemWriter;
-import io.spring.batch.batch.GemfireCountTasklet;
+import io.spring.batch.batch.FileWritingStepExecutionListner;
 import io.spring.batch.batch.SortFileItemReader;
 import io.spring.batch.domain.Item;
+import io.spring.batch.geode.SortedFileWriterFunction;
+import io.spring.batch.geode.SortedFileWriterFunctionExecution;
 import org.apache.geode.cache.Region;
 import org.apache.geode.pdx.PdxReader;
 import org.apache.geode.pdx.PdxSerializer;
 import org.apache.geode.pdx.PdxWriter;
+
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
@@ -55,11 +63,8 @@ import org.springframework.data.gemfire.GemfireTemplate;
 import org.springframework.data.gemfire.config.annotation.EnableEntityDefinedRegions;
 import org.springframework.data.gemfire.config.annotation.EnablePdx;
 import org.springframework.data.gemfire.config.annotation.PeerCacheApplication;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import org.springframework.data.gemfire.function.config.EnableGemfireFunctionExecutions;
+import org.springframework.data.gemfire.function.config.EnableGemfireFunctions;
 
 /**
  * @author Michael Minella
@@ -133,6 +138,8 @@ public class BatchConfiguration {
 	@PeerCacheApplication
 	@EnableEntityDefinedRegions(basePackageClasses = Item.class)
 	@EnablePdx(serializerBeanName = "pdxSerializer")
+	@EnableGemfireFunctionExecutions(basePackageClasses = SortedFileWriterFunction.class)
+	@EnableGemfireFunctions
 	public static class WorkerConfiguration {
 
 		@Bean
@@ -167,10 +174,13 @@ public class BatchConfiguration {
 		}
 
 		@Bean
-		public Step workerStep(StepBuilderFactory stepBuilderFactory) {
-			return stepBuilderFactory.get("workerStep").<Item, Item>chunk(1050000).reader(reader(null))
-				.writer(itemWriter())
-				.build();
+		public Step workerStep(StepBuilderFactory stepBuilderFactory, FileWritingStepExecutionListner listner) {
+			return stepBuilderFactory.get("workerStep")
+					.<Item, Item>chunk(1050000)
+					.reader(reader(null))
+					.writer(itemWriter())
+					.listener(listner)
+					.build();
 		}
 
 		@Bean
@@ -194,6 +204,11 @@ public class BatchConfiguration {
 		@StepScope
 		public GemfireItemWriter<byte[], Item> gemfireItemWriter(GemfireTemplate template) {
 			return new GemfireItemWriterBuilder<byte[], Item>().itemKeyMapper(Item::getKey).template(template).build();
+		}
+
+		@Bean
+		public FileWritingStepExecutionListner listner(SortedFileWriterFunctionExecution functionExecution) {
+			return new FileWritingStepExecutionListner(functionExecution);
 		}
 //
 //		@Bean
