@@ -19,14 +19,12 @@ import javax.xml.bind.DatatypeConverter;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceConstructor;
-import org.springframework.data.gemfire.mapping.annotation.Region;
-
-import java.io.Serializable;
+import org.springframework.data.gemfire.mapping.annotation.PartitionRegion;
 
 /**
  * @author Michael Minella
  */
-@Region("Items")
+@PartitionRegion(name = "Items", partitionResolverName = "sortingPartitionResolver")
 public class Item {
 
 	@Id

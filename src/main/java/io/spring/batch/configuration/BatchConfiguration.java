@@ -195,17 +195,17 @@ public class BatchConfiguration {
 		public GemfireItemWriter<byte[], Item> gemfireItemWriter(GemfireTemplate template) {
 			return new GemfireItemWriterBuilder<byte[], Item>().itemKeyMapper(Item::getKey).template(template).build();
 		}
-
-		@Bean
-		public Step validationStep(StepBuilderFactory stepBuilderFactory, GemfireCountTasklet tasklet) {
-			return stepBuilderFactory.get("validationStep").tasklet(tasklet).build();
-		}
-
-		@Bean
-		@StepScope
-		public GemfireCountTasklet tasklet() {
-			return new GemfireCountTasklet(gemfireTemplate(null));
-		}
+//
+//		@Bean
+//		public Step validationStep(StepBuilderFactory stepBuilderFactory, GemfireCountTasklet tasklet) {
+//			return stepBuilderFactory.get("validationStep").tasklet(tasklet).build();
+//		}
+//
+//		@Bean
+//		@StepScope
+//		public GemfireCountTasklet tasklet() {
+//			return new GemfireCountTasklet(gemfireTemplate(null));
+//		}
 
 	}
 }
