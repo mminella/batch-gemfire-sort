@@ -36,7 +36,8 @@ valsort -s all.sum
 ```
 
 # TODO
-1. Write file from local partition.
+1. Write file from local partition. - This _may_ be done.  The file size isn't making sense though...
+2. Convert to LRPs instead of tasks.
 2. Upload files to S3.
 3. Download input files from S3.
 4. Run on PCF

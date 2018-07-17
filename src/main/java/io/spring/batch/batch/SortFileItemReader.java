@@ -155,7 +155,8 @@ public class SortFileItemReader extends AbstractItemCountingItemStreamItemReader
 		}
 		else {
 			try {
-				return lineMapper.mapLine(line, lineCount);
+				Item item = lineMapper.mapLine(line, lineCount);
+				return item;
 			}
 			catch (Exception ex) {
 				throw new FlatFileParseException("Parsing error at line: " + lineCount + " in resource=["
