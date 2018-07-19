@@ -15,6 +15,10 @@
  */
 package io.spring.batch.geode;
 
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
+
 import io.spring.batch.domain.Item;
 import org.apache.geode.cache.EntryOperation;
 import org.apache.geode.cache.PartitionResolver;
@@ -27,10 +31,39 @@ import org.springframework.stereotype.Component;
 @Component("sortingPartitionResolver")
 public class SortingPartitionResolver implements PartitionResolver<byte[], Item> {
 
+	private final List<BigInteger> partitionBorders = new ArrayList<>(4);
+
+	public SortingPartitionResolver() {
+		byte [] max = new byte[] {127, 127, 127, 127, 127, 127, 127, 127, 127, 127};
+
+		BigInteger maxInteger = new BigInteger(max);
+
+		BigInteger partitionKeySize = maxInteger.divide(new BigInteger("4"));
+
+		BigInteger part1 = partitionKeySize;
+		BigInteger part2 = part1.add(partitionKeySize);
+		BigInteger part3 = part2.add(partitionKeySize);
+		BigInteger part4 = maxInteger;
+
+		partitionBorders.add(part1);
+		partitionBorders.add(part2);
+		partitionBorders.add(part3);
+		partitionBorders.add(part4);
+	}
+
 	@Override
 	public Object getRoutingObject(EntryOperation<byte[], Item> entryOperation) {
-		int value = (entryOperation.getKey()[0] & 0xff) >>> 6;
-		return new RoutingObject(value);
+
+		BigInteger key = new BigInteger(1, entryOperation.getKey());
+
+		for(int i = 0; i < partitionBorders.size(); i++) {
+			if(key.compareTo(partitionBorders.get(i)) < 0) {
+				System.out.println("for key " + key + " partition " + i + " is being used");
+				return new RoutingObject(i);
+			}
+		}
+
+		return new RoutingObject(3);
 	}
 
 	@Override

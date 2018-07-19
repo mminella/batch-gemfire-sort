@@ -41,11 +41,8 @@ public class FileWritingStepExecutionListner implements StepExecutionListener {
 
 	@Override
 	public ExitStatus afterStep(StepExecution stepExecution) {
-		System.out.println(">> afterStep was called");
 		try {
 			function.readLocalPartition();
-
-			System.out.println(">> file should be there...");
 		}
 		catch (IOException e) {
 			e.printStackTrace();

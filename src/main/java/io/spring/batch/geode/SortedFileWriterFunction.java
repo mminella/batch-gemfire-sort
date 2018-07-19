@@ -76,7 +76,7 @@ public class SortedFileWriterFunction {
 
 	private void writeFile(Region<byte[], Item> region, List<byte[]> keys) throws IOException {
 		FileChannel channel =
-				new RandomAccessFile(String.format("output%s-%s.dat", new BigInteger(keys.get(0)), new BigInteger(keys.get(keys.size() - 1))), "rw").getChannel();
+				new RandomAccessFile(String.format("output%s-%s.dat", new BigInteger(1, keys.get(0)), new BigInteger(1, keys.get(keys.size() - 1))), "rw").getChannel();
 		ByteBuffer buffer = ByteBuffer.allocate(1000000 * 50);
 
 		for (byte[] key: keys) {
