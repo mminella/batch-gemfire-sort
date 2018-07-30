@@ -32,4 +32,6 @@ spring-*/src/main/java/META-INF/MANIFEST.MF
 .idea/*
 
 # Data directory
-/src/main/resources/data/*
+**/data/*
+*.dat
+

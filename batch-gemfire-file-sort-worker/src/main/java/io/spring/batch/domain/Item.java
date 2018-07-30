@@ -19,12 +19,18 @@ import javax.xml.bind.DatatypeConverter;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.PersistenceConstructor;
-import org.springframework.data.gemfire.mapping.annotation.PartitionRegion;
 
 /**
  * @author Michael Minella
  */
-@PartitionRegion(name = "Items", partitionResolverName = "sortingPartitionResolver")
+//@PartitionRegion(name = "Items",
+//		partitionResolverName = "sortingPartitionResolver",
+//		fixedPartitions = {
+//			@PartitionRegion.FixedPartition(name = "0", primary = true),
+//			@PartitionRegion.FixedPartition(name = "1", primary = true),
+//			@PartitionRegion.FixedPartition(name = "2", primary = true),
+//			@PartitionRegion.FixedPartition(name = "3", primary = true)
+//		})
 public class Item {
 
 	@Id

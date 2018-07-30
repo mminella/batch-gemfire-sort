@@ -21,7 +21,6 @@ import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import org.springframework.integration.amqp.dsl.Amqp;
 import org.springframework.integration.channel.DirectChannel;
 import org.springframework.integration.dsl.IntegrationFlow;
@@ -45,63 +44,28 @@ public class RabbitConfiguration {
 				.build();
 	}
 
-	@Profile("master")
-	@Configuration
-	public static class MasterConfiguration {
-
-		@Bean
-		public DirectChannel requests() {
-			return new DirectChannel();
-		}
-
-		@Bean
-		public DirectChannel replies() {
-			return new DirectChannel();
-		}
-
-		@Bean
-		public IntegrationFlow outboundFlow(AmqpTemplate amqpTemplate) {
-			return IntegrationFlows.from(requests())
-					.handle(Amqp.outboundAdapter(amqpTemplate)
-							.routingKey("requests"))
-					.get();
-		}
-
-		@Bean
-		public IntegrationFlow inboundFlow(ConnectionFactory connectionFactory) {
-			return IntegrationFlows.from(Amqp.inboundAdapter(connectionFactory, "replies"))
-					.channel(replies())
-					.get();
-		}
+	@Bean
+	public DirectChannel requests() {
+		return new DirectChannel();
 	}
 
-	@Profile("worker")
-	@Configuration
-	public static class WorkerConfiguration {
+	@Bean
+	public DirectChannel replies() {
+		return new DirectChannel();
+	}
 
-		@Bean
-		public DirectChannel requests() {
-			return new DirectChannel();
-		}
+	@Bean
+	public IntegrationFlow outboundFlow(AmqpTemplate amqpTemplate) {
+		return IntegrationFlows.from(requests())
+				.handle(Amqp.outboundAdapter(amqpTemplate)
+						.routingKey("requests"))
+				.get();
+	}
 
-		@Bean
-		public DirectChannel replies() {
-			return new DirectChannel();
-		}
-
-		@Bean
-		public IntegrationFlow inboundFlow(ConnectionFactory connectionFactory) {
-			return IntegrationFlows.from(Amqp.inboundAdapter(connectionFactory, "requests"))
-					.channel(requests())
-					.get();
-		}
-
-		@Bean
-		public IntegrationFlow outboundFlow(AmqpTemplate amqpTemplate) {
-			return IntegrationFlows.from(replies())
-					.handle(Amqp.outboundAdapter(amqpTemplate)
-						.routingKey("replies"))
-					.get();
-		}
+	@Bean
+	public IntegrationFlow inboundFlow(ConnectionFactory connectionFactory) {
+		return IntegrationFlows.from(Amqp.inboundAdapter(connectionFactory, "replies"))
+				.channel(replies())
+				.get();
 	}
 }

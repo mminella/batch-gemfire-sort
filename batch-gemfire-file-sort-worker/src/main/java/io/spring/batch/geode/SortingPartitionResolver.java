@@ -18,10 +18,12 @@ package io.spring.batch.geode;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
+import java.util.Set;
 
 import io.spring.batch.domain.Item;
 import org.apache.geode.cache.EntryOperation;
-import org.apache.geode.cache.PartitionResolver;
+import org.apache.geode.cache.FixedPartitionResolver;
 
 import org.springframework.stereotype.Component;
 
@@ -29,7 +31,7 @@ import org.springframework.stereotype.Component;
  * @author Michael Minella
  */
 @Component("sortingPartitionResolver")
-public class SortingPartitionResolver implements PartitionResolver<byte[], Item> {
+public class SortingPartitionResolver implements FixedPartitionResolver<byte[], Item> {
 
 	private final List<BigInteger> partitionBorders = new ArrayList<>(4);
 
@@ -73,6 +75,16 @@ public class SortingPartitionResolver implements PartitionResolver<byte[], Item>
 
 	@Override
 	public void close() {
+
+	}
+
+	@Override
+	public String getPartitionName(EntryOperation<byte[], Item> entryOperation, Set<String> set) {
+		return String.valueOf(getRoutingObject(entryOperation).hashCode());
+	}
+
+	@Override
+	public void init(Properties props) {
 
 	}
 
