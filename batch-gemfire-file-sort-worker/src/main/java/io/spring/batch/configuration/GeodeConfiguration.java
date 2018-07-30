@@ -18,7 +18,6 @@ package io.spring.batch.configuration;
 import java.util.Collections;
 
 import io.spring.batch.domain.Item;
-import io.spring.batch.geode.SortedFileWriterFunction;
 import io.spring.batch.geode.SortingPartitionResolver;
 import org.apache.geode.cache.FixedPartitionAttributes;
 import org.apache.geode.cache.GemFireCache;
@@ -32,17 +31,13 @@ import org.apache.geode.pdx.PdxWriter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import org.springframework.data.gemfire.FixedPartitionAttributesFactoryBean;
 import org.springframework.data.gemfire.GemfireTemplate;
 import org.springframework.data.gemfire.PartitionAttributesFactoryBean;
 import org.springframework.data.gemfire.PartitionedRegionFactoryBean;
 import org.springframework.data.gemfire.RegionAttributesFactoryBean;
-import org.springframework.data.gemfire.config.annotation.EnableLocator;
 import org.springframework.data.gemfire.config.annotation.EnablePdx;
 import org.springframework.data.gemfire.config.annotation.PeerCacheApplication;
-import org.springframework.data.gemfire.function.config.EnableGemfireFunctionExecutions;
-import org.springframework.data.gemfire.function.config.EnableGemfireFunctions;
 
 /**
  * @author Michael Minella
@@ -50,14 +45,9 @@ import org.springframework.data.gemfire.function.config.EnableGemfireFunctions;
 @Configuration
 @PeerCacheApplication(name="SortClusterApplication", locators = "localhost[10334]")
 @EnablePdx(serializerBeanName = "pdxSerializer")
-@EnableGemfireFunctionExecutions(basePackageClasses = SortedFileWriterFunction.class)
-@EnableGemfireFunctions
+//@EnableGemfireFunctionExecutions(basePackageClasses = SortedFileWriterFunction.class)
+//@EnableGemfireFunctions
 public class GeodeConfiguration {
-
-	@Profile("locator")
-	@Configuration
-	@EnableLocator
-	public static class Locator{}
 
 	@Bean("Items")
 	public PartitionedRegionFactoryBean<byte[], Item> partitionedRegion(GemFireCache gemfireCache,

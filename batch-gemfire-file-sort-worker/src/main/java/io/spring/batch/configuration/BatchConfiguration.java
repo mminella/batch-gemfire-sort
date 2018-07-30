@@ -18,10 +18,8 @@ package io.spring.batch.configuration;
 import java.util.Arrays;
 
 import io.spring.batch.batch.CountingItemWriter;
-import io.spring.batch.batch.FileWritingStepExecutionListner;
 import io.spring.batch.batch.SortFileItemReader;
 import io.spring.batch.domain.Item;
-import io.spring.batch.geode.SortedFileWriterFunctionExecution;
 
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.StepScope;
@@ -52,15 +50,15 @@ public class BatchConfiguration {
 
 	@Bean
 	public Step workerStep(@Qualifier("requests") DirectChannel requests,
-			@Qualifier("replies") DirectChannel replies,
-			FileWritingStepExecutionListner listener) {
+			@Qualifier("replies") DirectChannel replies){
+//			FileWritingStepExecutionListner listener) {
 		return this.workerStepBuilderFactory.get("workerStep")
 				.inputChannel(requests)
 				.outputChannel(replies)
 				.<Item, Item>chunk(1050000)
 				.reader(reader(null))
 				.writer(writer())
-				.listener(listener)
+//				.listener(listener)
 				.build();
 	}
 
@@ -102,11 +100,11 @@ public class BatchConfiguration {
 	public GemfireItemWriter<byte[], Item> gemfireItemWriter(GemfireTemplate template) {
 		return new GemfireItemWriterBuilder<byte[], Item>().itemKeyMapper(Item::getKey).template(template).build();
 	}
-
-	@Bean
-	public FileWritingStepExecutionListner listener(SortedFileWriterFunctionExecution functionExecution) {
-		return new FileWritingStepExecutionListner(functionExecution);
-	}
+//
+//	@Bean
+//	public FileWritingStepExecutionListner listener(SortedFileWriterFunctionExecution functionExecution) {
+//		return new FileWritingStepExecutionListner(functionExecution);
+//	}
 //
 //		@Bean
 //		public Step validationStep(StepBuilderFactory stepBuilderFactory, GemfireCountTasklet tasklet) {

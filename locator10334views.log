@@ -1,0 +1,14 @@
+
+[info 2018/07/30 16:33:22.432 CDT <main> tid=0x1] Log opened with new distributed system connection.  View[192.168.1.236(SortServerOne:82416)<ec><v0>:1024|0] members: [192.168.1.236(SortServerOne:82416)<ec><v0>:1024{lead}]
+
+[info 2018/07/30 16:35:40.243 CDT <main> tid=0x1] Log opened with new distributed system connection.  View[192.168.1.236(SortServerOne:83154)<ec><v0>:1024|0] members: [192.168.1.236(SortServerOne:83154)<ec><v0>:1024{lead}]
+
+[info 2018/07/30 16:38:15.559 CDT <main> tid=0x1] Log opened with new distributed system connection.  View[192.168.1.236(SortServerOne:83944)<ec><v0>:1024|0] members: [192.168.1.236(SortServerOne:83944)<ec><v0>:1024{lead}]
+
+[info 2018/07/30 17:07:23.806 CDT <main> tid=0x1] Log opened with new distributed system connection.  View[192.168.1.236(SortServerOne:91842)<ec><v0>:1024|0] members: [192.168.1.236(SortServerOne:91842)<ec><v0>:1024{lead}]
+
+[info 2018/07/30 17:08:38.342 CDT <main> tid=0x1] Log opened with new distributed system connection.  View[192.168.1.236(SortServerOne:92195)<ec><v0>:1024|0] members: [192.168.1.236(SortServerOne:92195)<ec><v0>:1024{lead}]
+
+[info 2018/07/30 17:12:05.277 CDT <main> tid=0x1] Log opened with new distributed system connection.  View[192.168.1.236(SortServerOne:93154)<ec><v0>:1024|0] members: [192.168.1.236(SortServerOne:93154)<ec><v0>:1024{lead}]
+
+[info 2018/07/30 17:14:57.251 CDT <main> tid=0x1] Log opened with new distributed system connection.  View[192.168.1.236(SortServerOne:94016)<ec><v0>:1024|0] members: [192.168.1.236(SortServerOne:94016)<ec><v0>:1024{lead}]

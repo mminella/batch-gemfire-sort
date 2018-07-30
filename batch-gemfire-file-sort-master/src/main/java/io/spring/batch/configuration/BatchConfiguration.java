@@ -30,7 +30,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternResolver;
-import org.springframework.data.gemfire.config.annotation.EnableLocator;
 import org.springframework.integration.channel.DirectChannel;
 
 /**
@@ -40,12 +39,8 @@ import org.springframework.integration.channel.DirectChannel;
 @Configuration
 public class BatchConfiguration {
 
-	@EnableLocator
-	@Configuration
-	public static class MasterConfiguration {
-
-		@Autowired
-		private RemotePartitioningMasterStepBuilderFactory masterStepBuilderFactory;
+	@Autowired
+	private RemotePartitioningMasterStepBuilderFactory masterStepBuilderFactory;
 
 //		@Bean
 //		public Step master(StepBuilderFactory stepBuilderFactory, Partitioner partitioner,
@@ -56,30 +51,30 @@ public class BatchConfiguration {
 //				.build();
 //		}
 
-		@Bean
-		public Job batchGemfireSort(JobBuilderFactory jobBuilderFactory) throws Exception {
-			return jobBuilderFactory.get("batchGemfireSort").start(master(null, null)).build();
-		}
+	@Bean
+	public Job batchGemfireSort(JobBuilderFactory jobBuilderFactory) throws Exception {
+		return jobBuilderFactory.get("batchGemfireSort").start(master(null, null)).build();
+	}
 
-		@Bean
-		public Partitioner partitioner(ResourcePatternResolver resourcePatternResolver) throws IOException {
-			Resource[] resources = resourcePatternResolver.getResources("classpath:data/part*");
+	@Bean
+	public Partitioner partitioner(ResourcePatternResolver resourcePatternResolver) throws IOException {
+		Resource[] resources = resourcePatternResolver.getResources("classpath:data/part*");
 
-			MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
-			partitioner.setResources(resources);
+		MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
+		partitioner.setResources(resources);
 
-			return partitioner;
-		}
+		return partitioner;
+	}
 
-		@Bean
-		public Step master(@Qualifier("requests") DirectChannel requests, @Qualifier("replies") DirectChannel replies) throws IOException {
-			return this.masterStepBuilderFactory.get("master")
-					.partitioner("workerStep", partitioner(null))
-					.gridSize(4)
-					.outputChannel(requests)
-					.inputChannel(replies)
-					.build();
-		}
+	@Bean
+	public Step master(@Qualifier("requests") DirectChannel requests, @Qualifier("replies") DirectChannel replies) throws IOException {
+		return this.masterStepBuilderFactory.get("master")
+				.partitioner("workerStep", partitioner(null))
+				.gridSize(4)
+				.outputChannel(requests)
+				.inputChannel(replies)
+				.build();
+	}
 
 //		@Bean
 //		public SimpleCommandLineArgsProvider commandLineArgsProvider() {
@@ -112,6 +107,5 @@ public class BatchConfiguration {
 //
 //			return partitionHandler;
 //		}
-	}
 
 }
