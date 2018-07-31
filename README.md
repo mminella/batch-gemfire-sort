@@ -35,8 +35,19 @@ cat out0.sum out1.sum out2.sum out3.sum out4.sum out5.sum out6.sum out7.sum out8
 valsort -s all.sum 
 ```
 
+# Starting the nodes locally
+
+```
+java -Dgemfire.start-locator=localhost[10334] -jar batch-gemfire-file-sort-worker/target/batch-gemfire-file-sort-worker-0.0.1-SNAPSHOT.jar --partition.name=0 --spring.data.gemfire.name=SortServerZero
+java -jar batch-gemfire-file-sort-worker/target/batch-gemfire-file-sort-worker-0.0.1-SNAPSHOT.jar --partition.name=1 --spring.data.gemfire.name=SortServerOne
+java -jar batch-gemfire-file-sort-worker/target/batch-gemfire-file-sort-worker-0.0.1-SNAPSHOT.jar --partition.name=2 --spring.data.gemfire.name=SortServerTwo
+java -jar batch-gemfire-file-sort-worker/target/batch-gemfire-file-sort-worker-0.0.1-SNAPSHOT.jar --partition.name=3 --spring.data.gemfire.name=SortServerThree
+
+java -jar batch-gemfire-file-sort-master/target/batch-gemfire-file-sort-master-0.0.1-SNAPSHOT.jar
+```
+
 # TODO
-1. Write file from local partition. - This _may_ be done.  The file size isn't making sense though...
+1. Write file from local partition.
 2. Convert to LRPs instead of tasks. - DONE
 2. Upload files to S3.
 3. Download input files from S3.

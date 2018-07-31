@@ -8,9 +8,6 @@ import java.util.Properties;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
-import org.springframework.data.gemfire.config.annotation.EnableLocator;
 
 @EnableBatchProcessing
 @SpringBootApplication
@@ -27,18 +24,6 @@ public class BatchGemfireFileSortApplication {
 		newArgs.add("--debug");
 
 		SpringApplication.run(BatchGemfireFileSortApplication.class, newArgs.toArray(new String[newArgs.size()]));
-	}
-
-
-	@Profile("locator")
-	@Configuration
-	@EnableLocator
-	public static class Locator {
-//		@Bean
-//		public String myBean() {
-//			System.out.println(">> locator was activated");
-//			return "";
-//		}
 	}
 }
 

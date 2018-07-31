@@ -60,7 +60,7 @@ public class SortingPartitionResolver implements FixedPartitionResolver<byte[], 
 
 		for(int i = 0; i < partitionBorders.size(); i++) {
 			if(key.compareTo(partitionBorders.get(i)) < 0) {
-				System.out.println("for key " + key + " partition " + i + " is being used");
+//				System.out.println("for key " + key + " partition " + i + " is being used");
 				return new RoutingObject(i);
 			}
 		}

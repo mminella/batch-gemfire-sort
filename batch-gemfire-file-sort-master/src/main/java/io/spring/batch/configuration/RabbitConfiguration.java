@@ -32,40 +32,85 @@ import org.springframework.integration.dsl.IntegrationFlows;
 @Configuration
 public class RabbitConfiguration {
 
-	@Bean
-	public Queue requestQueues() {
-		return QueueBuilder.nonDurable("requests")
-				.build();
+	@Configuration
+	public static class Step1Configuration {
+
+		@Bean
+		public Queue requestQueues() {
+			return QueueBuilder.nonDurable("requests")
+					.build();
+		}
+
+		@Bean
+		public Queue replyQueues() {
+			return QueueBuilder.nonDurable("replies")
+					.build();
+		}
+
+		@Bean
+		public DirectChannel requests() {
+			return new DirectChannel();
+		}
+
+		@Bean
+		public DirectChannel replies() {
+			return new DirectChannel();
+		}
+
+		@Bean
+		public IntegrationFlow outboundFlow(AmqpTemplate amqpTemplate) {
+			return IntegrationFlows.from(requests())
+					.handle(Amqp.outboundAdapter(amqpTemplate)
+							.routingKey("requests"))
+					.get();
+		}
+
+		@Bean
+		public IntegrationFlow inboundFlow(ConnectionFactory connectionFactory) {
+			return IntegrationFlows.from(Amqp.inboundAdapter(connectionFactory, "replies"))
+					.channel(replies())
+					.get();
+		}
 	}
 
-	@Bean
-	public Queue replyQueues() {
-		return QueueBuilder.nonDurable("replies")
-				.build();
-	}
+	@Configuration
+	public static class Step2Configuration {
 
-	@Bean
-	public DirectChannel requests() {
-		return new DirectChannel();
-	}
+		@Bean
+		public Queue fileRequestQueues() {
+			return QueueBuilder.nonDurable("fileRequest")
+					.build();
+		}
 
-	@Bean
-	public DirectChannel replies() {
-		return new DirectChannel();
-	}
+		@Bean
+		public Queue fileReplyQueues() {
+			return QueueBuilder.nonDurable("fileReply")
+					.build();
+		}
 
-	@Bean
-	public IntegrationFlow outboundFlow(AmqpTemplate amqpTemplate) {
-		return IntegrationFlows.from(requests())
-				.handle(Amqp.outboundAdapter(amqpTemplate)
-						.routingKey("requests"))
-				.get();
-	}
+		@Bean
+		public DirectChannel fileRequests() {
+			return new DirectChannel();
+		}
 
-	@Bean
-	public IntegrationFlow inboundFlow(ConnectionFactory connectionFactory) {
-		return IntegrationFlows.from(Amqp.inboundAdapter(connectionFactory, "replies"))
-				.channel(replies())
-				.get();
+		@Bean
+		public DirectChannel fileReplies() {
+			return new DirectChannel();
+		}
+
+		@Bean
+		public IntegrationFlow outboundFlow(AmqpTemplate amqpTemplate) {
+			return IntegrationFlows.from(fileRequests())
+					.handle(Amqp.outboundAdapter(amqpTemplate)
+							.routingKey("fileRequest"))
+					.get();
+		}
+
+		@Bean
+		public IntegrationFlow inboundFlow(ConnectionFactory connectionFactory) {
+			return IntegrationFlows.from(Amqp.inboundAdapter(connectionFactory, "fileReply"))
+					.channel(fileReplies())
+					.get();
+		}
 	}
 }
