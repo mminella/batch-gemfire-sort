@@ -36,7 +36,8 @@ public class FileWritingTasklet implements Tasklet {
 	}
 
 	@Override
-	public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
+	public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) {
+
 		try {
 			function.readLocalPartition();
 		}

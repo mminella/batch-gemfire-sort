@@ -35,3 +35,7 @@ spring-*/src/main/java/META-INF/MANIFEST.MF
 **/data/*
 *.dat
 
+# Gemfire artifacts
+*.log
+
+

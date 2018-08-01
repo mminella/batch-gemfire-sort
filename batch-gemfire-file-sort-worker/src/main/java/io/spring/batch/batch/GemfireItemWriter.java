@@ -15,22 +15,34 @@
  */
 package io.spring.batch.batch;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import io.spring.batch.domain.Item;
 
 import org.springframework.batch.item.ItemWriter;
+import org.springframework.data.gemfire.GemfireOperations;
 
 /**
  * @author Michael Minella
  */
-public class CountingItemWriter implements ItemWriter<Item> {
+public class GemfireItemWriter implements ItemWriter<Item> {
 
-	private long count = 0;
+	private final GemfireOperations gemfireTemplate;
+
+	public GemfireItemWriter(GemfireOperations gemfireTemplate) {
+		this.gemfireTemplate = gemfireTemplate;
+	}
 
 	@Override
 	public void write(List<? extends Item> items) throws Exception {
-		count += items.size();
-		System.out.println(">> count = " + count);
+		Map<byte[], Item> mappedItems = new HashMap<>(items.size());
+
+		for (Item item : items) {
+			mappedItems.put(item.getKey(), item);
+		}
+
+		this.gemfireTemplate.putAll(mappedItems);
 	}
 }

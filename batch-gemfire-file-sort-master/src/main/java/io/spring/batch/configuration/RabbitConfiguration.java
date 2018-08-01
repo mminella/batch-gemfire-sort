@@ -99,7 +99,7 @@ public class RabbitConfiguration {
 		}
 
 		@Bean
-		public IntegrationFlow outboundFlow(AmqpTemplate amqpTemplate) {
+		public IntegrationFlow fileOutboundFlow(AmqpTemplate amqpTemplate) {
 			return IntegrationFlows.from(fileRequests())
 					.handle(Amqp.outboundAdapter(amqpTemplate)
 							.routingKey("fileRequest"))
@@ -107,7 +107,7 @@ public class RabbitConfiguration {
 		}
 
 		@Bean
-		public IntegrationFlow inboundFlow(ConnectionFactory connectionFactory) {
+		public IntegrationFlow fileInboundFlow(ConnectionFactory connectionFactory) {
 			return IntegrationFlows.from(Amqp.inboundAdapter(connectionFactory, "fileReply"))
 					.channel(fileReplies())
 					.get();

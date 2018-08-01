@@ -23,14 +23,6 @@ import org.springframework.data.annotation.PersistenceConstructor;
 /**
  * @author Michael Minella
  */
-//@PartitionRegion(name = "Items",
-//		partitionResolverName = "sortingPartitionResolver",
-//		fixedPartitions = {
-//			@PartitionRegion.FixedPartition(name = "0", primary = true),
-//			@PartitionRegion.FixedPartition(name = "1", primary = true),
-//			@PartitionRegion.FixedPartition(name = "2", primary = true),
-//			@PartitionRegion.FixedPartition(name = "3", primary = true)
-//		})
 public class Item {
 
 	@Id

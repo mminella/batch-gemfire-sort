@@ -67,7 +67,7 @@ public class BatchConfiguration {
 	public Step master(@Qualifier("requests") DirectChannel requests, @Qualifier("replies") DirectChannel replies) throws IOException {
 		return this.masterStepBuilderFactory.get("master")
 				.partitioner("workerStep", partitioner(null))
-				.gridSize(4)
+				.gridSize(2)
 				.outputChannel(requests)
 				.inputChannel(replies)
 				.build();
@@ -77,7 +77,7 @@ public class BatchConfiguration {
 	public Step fileWriter(@Qualifier("fileRequests") DirectChannel fileRequests, @Qualifier("fileReplies") DirectChannel fileReplies) {
 		return this.masterStepBuilderFactory.get("fileWriter")
 				.partitioner("fileWriterStep", filePartitioner())
-				.gridSize(4)
+				.gridSize(2)
 				.outputChannel(fileRequests)
 				.inputChannel(fileReplies)
 				.build();

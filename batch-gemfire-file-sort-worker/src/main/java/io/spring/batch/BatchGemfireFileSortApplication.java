@@ -15,13 +15,10 @@ public class BatchGemfireFileSortApplication {
 
 	public static void main(String[] args) {
 		Properties properties = System.getProperties();
-//		properties.put("spring.cloud.deployer.local.deleteFilesOnExit", "false");
 
 		List<String> newArgs = new ArrayList<>(args.length + 1);
 
 		Collections.addAll(newArgs, args);
-
-		newArgs.add("--debug");
 
 		SpringApplication.run(BatchGemfireFileSortApplication.class, newArgs.toArray(new String[newArgs.size()]));
 	}

@@ -35,22 +35,26 @@ public class SortingPartitionResolver implements FixedPartitionResolver<byte[], 
 
 	private final List<BigInteger> partitionBorders = new ArrayList<>(4);
 
+	private BigInteger partitionBorder;
+
 	public SortingPartitionResolver() {
 		byte [] max = new byte[] {127, 127, 127, 127, 127, 127, 127, 127, 127, 127};
 
 		BigInteger maxInteger = new BigInteger(max);
 
-		BigInteger partitionKeySize = maxInteger.divide(new BigInteger("4"));
+		BigInteger partitionKeySize = maxInteger.divide(new BigInteger("2"));
 
-		BigInteger part1 = partitionKeySize;
-		BigInteger part2 = part1.add(partitionKeySize);
-		BigInteger part3 = part2.add(partitionKeySize);
-		BigInteger part4 = maxInteger;
+		this.partitionBorder = partitionKeySize;
 
-		partitionBorders.add(part1);
-		partitionBorders.add(part2);
-		partitionBorders.add(part3);
-		partitionBorders.add(part4);
+//		BigInteger part1 = partitionKeySize;
+//		BigInteger part2 = part1.add(partitionKeySize);
+//		BigInteger part3 = part2.add(partitionKeySize);
+//		BigInteger part4 = maxInteger;
+
+//		partitionBorders.add(part1);
+//		partitionBorders.add(part2);
+//		partitionBorders.add(part3);
+//		partitionBorders.add(part4);
 	}
 
 	@Override
@@ -58,14 +62,21 @@ public class SortingPartitionResolver implements FixedPartitionResolver<byte[], 
 
 		BigInteger key = new BigInteger(1, entryOperation.getKey());
 
-		for(int i = 0; i < partitionBorders.size(); i++) {
-			if(key.compareTo(partitionBorders.get(i)) < 0) {
-//				System.out.println("for key " + key + " partition " + i + " is being used");
-				return new RoutingObject(i);
-			}
+		if(key.compareTo(this.partitionBorder) > 0) {
+			return new RoutingObject(0);
+		}
+		else {
+			return new RoutingObject(1);
 		}
 
-		return new RoutingObject(3);
+//		for(int i = 0; i < partitionBorders.size(); i++) {
+//			if(key.compareTo(partitionBorders.get(i)) < 0) {
+////				System.out.println("for key " + key + " partition " + i + " is being used");
+//				return new RoutingObject(i);
+//			}
+//		}
+//
+//		return new RoutingObject(3);
 	}
 
 	@Override
