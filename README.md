@@ -37,19 +37,54 @@ valsort -s all.sum
 
 # Starting the nodes locally
 
+Configure the master's application.properties as follows:
+
 ```
-java -Dgemfire.start-locator=localhost[10334] -jar batch-gemfire-file-sort-worker/target/batch-gemfire-file-sort-worker-0.0.1-SNAPSHOT.jar --partition.name=0 --spring.data.gemfire.name=SortServerZero
-java -jar batch-gemfire-file-sort-worker/target/batch-gemfire-file-sort-worker-0.0.1-SNAPSHOT.jar --partition.name=1 --spring.data.gemfire.name=SortServerOne
-java -jar batch-gemfire-file-sort-worker/target/batch-gemfire-file-sort-worker-0.0.1-SNAPSHOT.jar --partition.name=2 --spring.data.gemfire.name=SortServerTwo
-java -jar batch-gemfire-file-sort-worker/target/batch-gemfire-file-sort-worker-0.0.1-SNAPSHOT.jar --partition.name=3 --spring.data.gemfire.name=SortServerThree
+spring.application.name=batch-gemfire-sort
+spring.datasource.driverClassName=com.mysql.jdbc.Driver
+spring.datasource.url=<JDBC_URL>
+spring.datasource.username=<JDBC_USER>
+spring.datasource.password=<JDBC_PASSWORD>
+spring.batch.initialize-schema=always
+spring.batch.job.enabled=false
+amazonProperties.endpointUrl=<ENDPOINT_URL>
+amazonProperties.accessKey=<ACCESS_KEY>
+amazonProperties.secretKey=<SECRET_KEY>
+amazonProperties.bucketName=<BUCKET_NAME>
+spring.batch.grid-size=<NUMBER_OF_NODES>
+```
+
+
+Configure the worker's application.properties as follows:
+
+```
+spring.application.name=batch-gemfire-sort-worker
+spring.datasource.driverClassName=com.mysql.jdbc.Driver
+spring.datasource.url=<JDBC_URL>
+spring.datasource.username=<JDBC_USER>
+spring.datasource.password=<JDBC_PASSWORD>
+spring.batch.initialize-schema=never
+amazonProperties.endpointUrl=<ENDPOINT_URL>
+amazonProperties.accessKey=<ACCESS_KEY>
+amazonProperties.secretKey=<SECRET_KEY>
+amazonProperties.bucketName=<BUCKET_NAME>
+spring.batch.working-directory=<LOCATION_TO_WRITE_INPUT_FILES> # optional if configuring via the command line as noted below
+```
+
+To launch the nodes locally once configuring the above:
+```
+java -Dgemfire.start-locator=localhost[10334] -jar batch-gemfire-file-sort-worker/target/batch-gemfire-file-sort-worker-0.0.1-SNAPSHOT.jar --partition.name=0 --spring.data.gemfire.name=SortServerZero --spring.batch.working-directory=/Users/mminella/tmp/partition0
+java -jar batch-gemfire-file-sort-worker/target/batch-gemfire-file-sort-worker-0.0.1-SNAPSHOT.jar --partition.name=1 --spring.data.gemfire.name=SortServerOne --spring.batch.working-directory=/Users/mminella/tmp/partition1
+java -jar batch-gemfire-file-sort-worker/target/batch-gemfire-file-sort-worker-0.0.1-SNAPSHOT.jar --partition.name=2 --spring.data.gemfire.name=SortServerTwo --spring.batch.working-directory=/Users/mminella/tmp/partition2
+java -jar batch-gemfire-file-sort-worker/target/batch-gemfire-file-sort-worker-0.0.1-SNAPSHOT.jar --partition.name=3 --spring.data.gemfire.name=SortServerThree --spring.batch.working-directory=/Users/mminella/tmp/partition3
 
 java -jar batch-gemfire-file-sort-master/target/batch-gemfire-file-sort-master-0.0.1-SNAPSHOT.jar
 ```
 
 # TODO
-1. Write file from local partition.
+1. Write file from local partition. - DONE
 2. Convert to LRPs instead of tasks. - DONE
 2. Upload files to S3.
-3. Download input files from S3.
-4. Run on PCF
+3. Download input files from S3. - DONE
+4. Run on PKS
 5. Scale up

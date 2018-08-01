@@ -15,6 +15,10 @@
  */
 package io.spring.batch.configuration;
 
+import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.services.s3.AmazonS3Client;
+import io.spring.batch.batch.FileDownloadTasklet;
 import io.spring.batch.batch.FileWritingTasklet;
 import io.spring.batch.batch.GemfireItemWriter;
 import io.spring.batch.batch.SortFileItemReader;
@@ -44,10 +48,34 @@ public class BatchConfiguration {
 	@Autowired
 	private RemotePartitioningWorkerStepBuilderFactory workerStepBuilderFactory;
 
+	@StepScope
 	@Bean
-	public Step workerStep(@Qualifier("requests") DirectChannel requests,
+	public FileDownloadTasklet fileDownloadTasklet(@Value("${amazonProperties.accessKey}") String accessKey,
+			@Value("${amazonProperties.secretKey}") String secretKey,
+			@Value("#{stepExecutionContext['fileName']}") String fileName,
+			@Value("${spring.batch.working-directory}") String workingDir,
+			@Value("${amazonProperties.bucketName}") String bucketName) {
+
+		AWSCredentials creds = new BasicAWSCredentials(accessKey, secretKey);
+		AmazonS3Client s3Client = new AmazonS3Client(creds);
+
+		return new FileDownloadTasklet(s3Client, fileName, workingDir, bucketName);
+	}
+
+	@Bean
+	public Step fileDownloadStep(@Qualifier("fileDownloadRequests") DirectChannel fileDownloadRequests,
+			@Qualifier("fileDownloadReplies") DirectChannel fileDownloadReplies) {
+		return this.workerStepBuilderFactory.get("fileDownloadStep")
+				.inputChannel(fileDownloadRequests)
+				.outputChannel(fileDownloadReplies)
+				.tasklet(fileDownloadTasklet(null, null, null, null, null))
+				.build();
+	}
+
+	@Bean
+	public Step ingestStep(@Qualifier("requests") DirectChannel requests,
 			@Qualifier("replies") DirectChannel replies) {
-		return this.workerStepBuilderFactory.get("workerStep")
+		return this.workerStepBuilderFactory.get("ingestStep")
 				.inputChannel(requests)
 				.outputChannel(replies)
 				.<Item, Item>chunk(1050000)
@@ -58,7 +86,7 @@ public class BatchConfiguration {
 
 	@Bean
 	@StepScope
-	public SortFileItemReader reader(@Value("#{stepExecutionContext['fileName']}") Resource file) {
+	public SortFileItemReader reader(@Value("file://${spring.batch.working-directory}/input") Resource file) {
 		SortFileItemReader reader = new SortFileItemReader();
 
 		reader.setName("reader");

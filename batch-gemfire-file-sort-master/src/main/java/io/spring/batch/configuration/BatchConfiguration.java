@@ -19,20 +19,23 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.services.s3.AmazonS3Client;
+import io.spring.batch.batch.S3Partitioner;
+
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
-import org.springframework.batch.core.partition.support.MultiResourcePartitioner;
 import org.springframework.batch.core.partition.support.Partitioner;
 import org.springframework.batch.integration.config.annotation.EnableBatchIntegration;
 import org.springframework.batch.integration.partition.RemotePartitioningMasterStepBuilderFactory;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.integration.channel.DirectChannel;
 
 /**
@@ -48,26 +51,42 @@ public class BatchConfiguration {
 	@Bean
 	public Job batchGemfireSort(JobBuilderFactory jobBuilderFactory) throws Exception {
 		return jobBuilderFactory.get("batchGemfireSort")
-				.start(master(null, null))
+				.start(fileDownloadMaster(null, null, null))
+				.next(ingestFileMaster(null, null, null))
 				.next(fileWriter(null, null))
 				.build();
 	}
 
 	@Bean
-	public Partitioner partitioner(ResourcePatternResolver resourcePatternResolver) throws IOException {
-		Resource[] resources = resourcePatternResolver.getResources("classpath:data/part*");
+	public Partitioner filePartitioner(@Value("${amazonProperties.accessKey}") String accessKey,
+			@Value("${amazonProperties.secretKey}") String secretKey,
+			@Value("${amazonProperties.bucketName}") String bucket) {
 
-		MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
-		partitioner.setResources(resources);
+		AWSCredentials creds = new BasicAWSCredentials(accessKey, secretKey);
+		AmazonS3Client s3Client = new AmazonS3Client(creds);
 
-		return partitioner;
+		return new S3Partitioner(s3Client, bucket);
 	}
 
 	@Bean
-	public Step master(@Qualifier("requests") DirectChannel requests, @Qualifier("replies") DirectChannel replies) throws IOException {
-		return this.masterStepBuilderFactory.get("master")
-				.partitioner("workerStep", partitioner(null))
-				.gridSize(2)
+	public Step fileDownloadMaster(@Value("${spring.batch.grid-size}") Integer gridSize,
+			@Qualifier("fileDownloadRequests") DirectChannel fileDownloadRequests,
+			@Qualifier("fileDownloadReplies") DirectChannel fileDownloadReplies) {
+		return this.masterStepBuilderFactory.get("fileDownloadMaster")
+				.partitioner("fileDownloadStep", filePartitioner(null, null, null))
+				.gridSize(gridSize)
+				.outputChannel(fileDownloadRequests)
+				.inputChannel(fileDownloadReplies)
+				.build();
+	}
+
+	@Bean
+	public Step ingestFileMaster(@Qualifier("requests") DirectChannel requests,
+			@Qualifier("replies") DirectChannel replies,
+			@Value("${spring.batch.grid-size}") Integer gridSize) throws IOException {
+		return this.masterStepBuilderFactory.get("ingestFileMaster")
+				.partitioner("ingestStep", filePartitioner(null, null, null))
+				.gridSize(gridSize)
 				.outputChannel(requests)
 				.inputChannel(replies)
 				.build();

@@ -33,7 +33,48 @@ import org.springframework.integration.dsl.IntegrationFlows;
 public class RabbitConfiguration {
 
 	@Configuration
-	public static class Step1Configuration {
+	public static class FileDownloadConfiguration {
+
+		@Bean
+		public Queue fileDownloadRequestQueue() {
+			return QueueBuilder.nonDurable("fileDownloadRequests")
+					.build();
+		}
+
+		@Bean
+		public Queue fileDownloadReplyQueue() {
+			return QueueBuilder.nonDurable("fileDownloadReplies")
+					.build();
+		}
+
+		@Bean
+		public DirectChannel fileDownloadRequests() {
+			return new DirectChannel();
+		}
+
+		@Bean
+		public DirectChannel fileDownloadReplies() {
+			return new DirectChannel();
+		}
+
+		@Bean
+		public IntegrationFlow fileDownloadOutboundFlow(AmqpTemplate amqpTemplate) {
+			return IntegrationFlows.from(fileDownloadRequests())
+					.handle(Amqp.outboundAdapter(amqpTemplate)
+							.routingKey("fileDownloadRequests"))
+					.get();
+		}
+
+		@Bean
+		public IntegrationFlow fileDownloadInboundFlow(ConnectionFactory connectionFactory) {
+			return IntegrationFlows.from(Amqp.inboundAdapter(connectionFactory, "fileDownloadReplies"))
+					.channel(fileDownloadReplies())
+					.get();
+		}
+	}
+
+	@Configuration
+	public static class IngestFileConfiguration {
 
 		@Bean
 		public Queue requestQueues() {
@@ -74,7 +115,7 @@ public class RabbitConfiguration {
 	}
 
 	@Configuration
-	public static class Step2Configuration {
+	public static class FileWriterConfiguration {
 
 		@Bean
 		public Queue fileRequestQueues() {
