@@ -93,9 +93,8 @@ java -jar batch-gemfire-file-sort-master/target/batch-gemfire-file-sort-master-0
 
 1. Install Helm: `brew install kubernetes-helm`
 2. Install MySql: `helm install stable/mysql`
-3. Create a ConfigMap.yml based on the ConfigMap_template.yml updating the values required for your installation.
 4. If running MySql locally, stop it: `brew services stop mysql`
-5. Configure environment to talk to MySql:
+5. Configure environment to talk to MySql and create the `sort` database:
 ```
 # In one tab
 $ export POD_NAME=$(kubectl get pods --namespace default -l "app=ungaged-markhor-mysql" -o jsonpath="{.items[0].metadata.name}")
@@ -120,9 +119,10 @@ docker tag mminella/batch-gemfire-file-sort-master $REG_IP:80/batch-gemfire-file
 docker push $REG_IP:80/batch-gemfire-file-sort-master
 ```
 3. Update application-k8s.properties to reflect correct connection data
-4. Create configmap: `kubectl create -f ConfigMap.yml` (be sure to update this with the correct values)
-5. Create service: `kubectl create -f Service.yml`
-6. Create deployment: `kubectl create -f Deployment.yml`
+4. Create a ConfigMap.yml based on the ConfigMap_template.yml updating the values required for your installation.
+5. Create configmap: `kubectl create -f ConfigMap.yml` (be sure to update this with the correct values)
+6. Create service: `kubectl create -f Service.yml`
+7. Create deployment: `kubectl create -f Deployment.yml`
 
 
 
