@@ -73,7 +73,7 @@ public class RabbitConfiguration {
 	}
 
 	@Configuration
-	public static class Step1Configuration {
+	public static class IngestFileConfiguration {
 		@Bean
 		public Queue requestQueues() {
 			return QueueBuilder.nonDurable("requests")
@@ -113,7 +113,7 @@ public class RabbitConfiguration {
 	}
 
 	@Configuration
-	public static class Step2Configuration {
+	public static class FileWriterConfiguration {
 
 		@Bean
 		public Queue fileRequestQueues() {
@@ -149,6 +149,47 @@ public class RabbitConfiguration {
 			return IntegrationFlows.from(fileReplies())
 					.handle(Amqp.outboundAdapter(amqpTemplate)
 							.routingKey("fileReply"))
+					.get();
+		}
+	}
+
+	@Configuration
+	public static class FileUploadConfiguration {
+
+		@Bean
+		public Queue fileUploadRequestQueues() {
+			return QueueBuilder.nonDurable("fileUploadRequest")
+					.build();
+		}
+
+		@Bean
+		public Queue fileUploadReplyQueues() {
+			return QueueBuilder.nonDurable("fileUploadReply")
+					.build();
+		}
+
+		@Bean
+		public DirectChannel fileUploadRequests() {
+			return new DirectChannel();
+		}
+
+		@Bean
+		public DirectChannel fileUploadReplies() {
+			return new DirectChannel();
+		}
+
+		@Bean
+		public IntegrationFlow fileUploadInboundFlow(ConnectionFactory connectionFactory) {
+			return IntegrationFlows.from(Amqp.inboundAdapter(connectionFactory, "fileUploadRequest"))
+					.channel(fileUploadRequests())
+					.get();
+		}
+
+		@Bean
+		public IntegrationFlow fileUploadOutboundFlow(AmqpTemplate amqpTemplate) {
+			return IntegrationFlows.from(fileUploadReplies())
+					.handle(Amqp.outboundAdapter(amqpTemplate)
+							.routingKey("fileUploadReply"))
 					.get();
 		}
 	}

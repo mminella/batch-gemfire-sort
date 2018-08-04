@@ -84,7 +84,46 @@ java -jar batch-gemfire-file-sort-master/target/batch-gemfire-file-sort-master-0
 # TODO
 1. Write file from local partition. - DONE
 2. Convert to LRPs instead of tasks. - DONE
-2. Upload files to S3.
+2. Upload files to S3. - DONE
 3. Download input files from S3. - DONE
 4. Run on PKS
 5. Scale up
+
+# Minikube setup (after following: https://thenewstack.io/tutorial-configuring-ultimate-development-environment-kubernetes/)
+
+1. Install Helm: `brew install kubernetes-helm`
+2. Install MySql: `helm install stable/mysql`
+3. Create a ConfigMap.yml based on the ConfigMap_template.yml updating the values required for your installation.
+4. If running MySql locally, stop it: `brew services stop mysql`
+5. Configure environment to talk to MySql:
+```
+# In one tab
+$ export POD_NAME=$(kubectl get pods --namespace default -l "app=ungaged-markhor-mysql" -o jsonpath="{.items[0].metadata.name}")
+$ kubectl port-forward $POD_NAME 3306:3306
+
+#In another tab
+$ MYSQL_HOST=127.0.0.1
+$ MYSQL_PORT=3306
+$ MYSQL_ROOT_PASSWORD=$(kubectl get secret --namespace default ungaged-markhor-mysql -o jsonpath="{.data.mysql-root-password}" | base64 --decode; echo)
+$ mysql -h ${MYSQL_HOST} -P${MYSQL_PORT} -u root -p${MYSQL_ROOT_PASSWORD}
+mysql> create database sort;
+```
+
+6. Install RabbitMQ: `helm install stable/rabbitmq`
+
+
+## For Master
+1. Build projects: `mvn package dockerfile:build`
+2. Push to local docker registry:
+```
+docker tag mminella/batch-gemfire-file-sort-master $REG_IP:80/batch-gemfire-file-sort-master
+docker push $REG_IP:80/batch-gemfire-file-sort-master
+```
+3. Update application-k8s.properties to reflect correct connection data
+4. Create configmap: `kubectl create -f ConfigMap.yml` (be sure to update this with the correct values)
+5. Create service: `kubectl create -f Service.yml`
+6. Create deployment: `kubectl create -f Deployment.yml`
+
+
+
+

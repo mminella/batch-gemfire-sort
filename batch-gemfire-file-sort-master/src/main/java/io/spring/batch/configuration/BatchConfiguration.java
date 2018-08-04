@@ -54,6 +54,7 @@ public class BatchConfiguration {
 				.start(fileDownloadMaster(null, null, null))
 				.next(ingestFileMaster(null, null, null))
 				.next(fileWriter(null, null))
+				.next(fileUpload(null, null))
 				.build();
 	}
 
@@ -114,5 +115,15 @@ public class BatchConfiguration {
 
 			return partitions;
 		};
+	}
+
+	@Bean
+	public Step fileUpload(@Qualifier("fileUploadRequests") DirectChannel fileUploadRequests, @Qualifier("fileUploadReplies") DirectChannel fileUploadReplies) {
+		return this.masterStepBuilderFactory.get("fileWriter")
+				.partitioner("fileUpload", filePartitioner())
+				.gridSize(2)
+				.outputChannel(fileUploadRequests)
+				.inputChannel(fileUploadReplies)
+				.build();
 	}
 }

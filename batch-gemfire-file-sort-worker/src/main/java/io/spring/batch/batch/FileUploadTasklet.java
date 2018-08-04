@@ -15,10 +15,11 @@
  */
 package io.spring.batch.batch;
 
-import java.io.IOException;
+import java.io.File;
 
-import io.spring.batch.geode.SortedFileWriterFunctionExecution;
-import org.apache.shiro.util.Assert;
+import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.model.CannedAccessControlList;
+import com.amazonaws.services.s3.model.PutObjectRequest;
 
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.scope.context.ChunkContext;
@@ -28,25 +29,30 @@ import org.springframework.batch.repeat.RepeatStatus;
 /**
  * @author Michael Minella
  */
-public class FileWritingTasklet implements Tasklet {
+public class FileUploadTasklet implements Tasklet {
 
-	private final SortedFileWriterFunctionExecution function;
+	private final AmazonS3Client s3Client;
 
-	public FileWritingTasklet(SortedFileWriterFunctionExecution function) {
-		this.function = function;
+	private final String workingDir;
+
+	private final String bucketName;
+
+	private final File file;
+
+	public FileUploadTasklet(AmazonS3Client s3Client, String workingDir, String bucketName, File file) {
+		this.s3Client = s3Client;
+		this.workingDir = workingDir;
+		this.bucketName = bucketName;
+		this.file = file;
 	}
 
 	@Override
-	public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) {
+	public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
 
-		try {
-			Object done = function.readLocalPartition();
+		System.out.println(">> Uploading " + file.getName());
 
-			Assert.notNull(done);
-		}
-		catch (IOException e) {
-			e.printStackTrace();
-		}
+		s3Client.putObject(new PutObjectRequest(this.bucketName, file.getName(), file)
+				.withCannedAcl(CannedAccessControlList.PublicRead));
 
 		return RepeatStatus.FINISHED;
 	}

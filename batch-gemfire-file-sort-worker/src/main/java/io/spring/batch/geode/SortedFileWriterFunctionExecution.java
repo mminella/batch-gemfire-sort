@@ -25,5 +25,5 @@ import org.springframework.data.gemfire.function.annotation.OnRegion;
 @OnRegion(region = "Items")
 public interface SortedFileWriterFunctionExecution {
 
-	void readLocalPartition() throws IOException;
+	Object readLocalPartition() throws IOException;
 }

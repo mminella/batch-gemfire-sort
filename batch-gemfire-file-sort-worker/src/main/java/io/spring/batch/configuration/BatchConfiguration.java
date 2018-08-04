@@ -15,10 +15,14 @@
  */
 package io.spring.batch.configuration;
 
+import java.io.File;
+import java.io.FilenameFilter;
+
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3Client;
 import io.spring.batch.batch.FileDownloadTasklet;
+import io.spring.batch.batch.FileUploadTasklet;
 import io.spring.batch.batch.FileWritingTasklet;
 import io.spring.batch.batch.GemfireItemWriter;
 import io.spring.batch.batch.SortFileItemReader;
@@ -48,16 +52,20 @@ public class BatchConfiguration {
 	@Autowired
 	private RemotePartitioningWorkerStepBuilderFactory workerStepBuilderFactory;
 
-	@StepScope
 	@Bean
-	public FileDownloadTasklet fileDownloadTasklet(@Value("${amazonProperties.accessKey}") String accessKey,
-			@Value("${amazonProperties.secretKey}") String secretKey,
-			@Value("#{stepExecutionContext['fileName']}") String fileName,
-			@Value("${spring.batch.working-directory}") String workingDir,
-			@Value("${amazonProperties.bucketName}") String bucketName) {
+	public AmazonS3Client s3Client(@Value("${amazonProperties.accessKey}") String accessKey,
+			@Value("${amazonProperties.secretKey}") String secretKey) {
 
 		AWSCredentials creds = new BasicAWSCredentials(accessKey, secretKey);
-		AmazonS3Client s3Client = new AmazonS3Client(creds);
+		return new AmazonS3Client(creds);
+	}
+
+	@StepScope
+	@Bean
+	public FileDownloadTasklet fileDownloadTasklet(AmazonS3Client s3Client,
+			@Value("#{stepExecutionContext['fileName']}") String fileName,
+			@Value("${spring.batch.working-directory}") String workingDir,
+			@Value("${amazonProperties.input-bucket-name}") String bucketName) {
 
 		return new FileDownloadTasklet(s3Client, fileName, workingDir, bucketName);
 	}
@@ -68,7 +76,7 @@ public class BatchConfiguration {
 		return this.workerStepBuilderFactory.get("fileDownloadStep")
 				.inputChannel(fileDownloadRequests)
 				.outputChannel(fileDownloadReplies)
-				.tasklet(fileDownloadTasklet(null, null, null, null, null))
+				.tasklet(fileDownloadTasklet(null, null, null, null))
 				.build();
 	}
 
@@ -85,7 +93,6 @@ public class BatchConfiguration {
 	}
 
 	@Bean
-	@StepScope
 	public SortFileItemReader reader(@Value("file://${spring.batch.working-directory}/input") Resource file) {
 		SortFileItemReader reader = new SortFileItemReader();
 
@@ -96,7 +103,6 @@ public class BatchConfiguration {
 	}
 
 	@Bean
-	@StepScope
 	public GemfireItemWriter gemfireItemWriter(GemfireTemplate template) {
 		return new GemfireItemWriter(template);
 	}
@@ -110,5 +116,32 @@ public class BatchConfiguration {
 				.outputChannel(replies)
 				.tasklet(new FileWritingTasklet(functionExecution))
 				.build();
+	}
+
+	@Bean
+	public Step fileUpload(@Qualifier("fileUploadRequests") DirectChannel fileUploadRequests,
+			@Qualifier("fileUploadReplies") DirectChannel fileUploadReplies) {
+		return this.workerStepBuilderFactory.get("fileUpload")
+				.inputChannel(fileUploadRequests)
+				.outputChannel(fileUploadReplies)
+				.tasklet(fileUploadTasklet(null, null, null))
+				.build();
+	}
+
+	@StepScope
+	@Bean
+	public FileUploadTasklet fileUploadTasklet(AmazonS3Client s3Client,
+			@Value("${spring.batch.working-directory}") String workingDir,
+			@Value("${amazonProperties.output-bucket-name}") String bucketName) {
+
+		//TODO THIS ISN'T WORKING BECAUSE THE FILE ISN'T DONE BEING WRITTEN YET (GEMFIRE FUNCTION STILL RUNNING AT THIS POINT)
+
+		File f = new File(workingDir);
+		File[] matchingFiles = f.listFiles((dir, name) -> {
+			System.out.println(String.format(">> dir = %s name = %s", dir, name));
+			return name.startsWith("output") && name.endsWith("dat");
+		});
+
+		return new FileUploadTasklet(s3Client, workingDir, bucketName, matchingFiles[0]);
 	}
 }

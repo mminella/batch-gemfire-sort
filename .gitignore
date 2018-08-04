@@ -38,5 +38,5 @@ spring-*/src/main/java/META-INF/MANIFEST.MF
 
 # Gemfire artifacts
 *.log
-
+**/ConfigMap.yml
 

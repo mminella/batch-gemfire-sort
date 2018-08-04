@@ -154,4 +154,45 @@ public class RabbitConfiguration {
 					.get();
 		}
 	}
+
+	@Configuration
+	public static class FileUploadConfiguration {
+
+		@Bean
+		public Queue fileUploadRequestQueues() {
+			return QueueBuilder.nonDurable("fileUploadRequest")
+					.build();
+		}
+
+		@Bean
+		public Queue fileUploadReplyQueues() {
+			return QueueBuilder.nonDurable("fileUploadReply")
+					.build();
+		}
+
+		@Bean
+		public DirectChannel fileUploadRequests() {
+			return new DirectChannel();
+		}
+
+		@Bean
+		public DirectChannel fileUploadReplies() {
+			return new DirectChannel();
+		}
+
+		@Bean
+		public IntegrationFlow fileUploadOutboundFlow(AmqpTemplate amqpTemplate) {
+			return IntegrationFlows.from(fileUploadRequests())
+					.handle(Amqp.outboundAdapter(amqpTemplate)
+							.routingKey("fileUploadRequest"))
+					.get();
+		}
+
+		@Bean
+		public IntegrationFlow fileUploadInboundFlow(ConnectionFactory connectionFactory) {
+			return IntegrationFlows.from(Amqp.inboundAdapter(connectionFactory, "fileUploadReply"))
+					.channel(fileUploadReplies())
+					.get();
+		}
+	}
 }

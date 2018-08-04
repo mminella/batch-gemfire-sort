@@ -31,6 +31,7 @@ import org.apache.geode.cache.execute.FunctionContext;
 import org.apache.geode.cache.execute.RegionFunctionContext;
 import org.apache.geode.cache.partition.PartitionRegionHelper;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.gemfire.function.annotation.GemfireFunction;
 import org.springframework.stereotype.Component;
 
@@ -40,8 +41,14 @@ import org.springframework.stereotype.Component;
 @Component
 public class SortedFileWriterFunction {
 
+	private final String workingDirectory;
+
+	public SortedFileWriterFunction(@Value("${spring.batch.working-directory}") String workingDirectory) {
+		this.workingDirectory = workingDirectory;
+	}
+
 	@GemfireFunction
-	public void readLocalPartition(FunctionContext functionContext) throws IOException {
+	public Object readLocalPartition(FunctionContext functionContext) throws IOException {
 		Region<byte[], Item> localData = PartitionRegionHelper.getLocalDataForContext((RegionFunctionContext) functionContext);
 
 		Set<byte[]> keySet = localData.keySet();
@@ -62,11 +69,13 @@ public class SortedFileWriterFunction {
 		if(keys.size() > 0) {
 			writeFile(localData, keys);
 		}
+
+		return "done";
 	}
 
 	private void writeFile(Region<byte[], Item> region, List<byte[]> keys) throws IOException {
 		FileChannel channel =
-				new RandomAccessFile(String.format("output_%s-%s.dat", new BigInteger(1, keys.get(0)), new BigInteger(1, keys.get(keys.size() - 1))), "rw").getChannel();
+				new RandomAccessFile(workingDirectory + "/" + String.format("output_%s-%s.dat", new BigInteger(1, keys.get(0)), new BigInteger(1, keys.get(keys.size() - 1))), "rw").getChannel();
 		ByteBuffer buffer = ByteBuffer.allocate(1000000 * 50);
 
 		for (byte[] key: keys) {
