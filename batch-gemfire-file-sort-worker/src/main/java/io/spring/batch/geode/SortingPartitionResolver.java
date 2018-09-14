@@ -23,8 +23,11 @@ import java.util.Set;
 
 import io.spring.batch.domain.Item;
 import org.apache.geode.cache.EntryOperation;
+import org.apache.geode.cache.FixedPartitionAttributes;
 import org.apache.geode.cache.FixedPartitionResolver;
+import org.apache.geode.cache.RegionAttributes;
 
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 /**
@@ -33,50 +36,80 @@ import org.springframework.stereotype.Component;
 @Component("sortingPartitionResolver")
 public class SortingPartitionResolver implements FixedPartitionResolver<byte[], Item> {
 
-	private final List<BigInteger> partitionBorders = new ArrayList<>(4);
+	private List<BigInteger> partitionBorders = new ArrayList<>(4);
 
-	private BigInteger partitionBorder;
+	private List<String> partitionNames = new ArrayList<>(4);
+
+	private RegionAttributes regionAttributes;
+
+	private boolean initialized = false;
+
+	private ApplicationContext context;
 
 	public SortingPartitionResolver() {
-		byte [] max = new byte[] {127, 127, 127, 127, 127, 127, 127, 127, 127, 127};
 
-		BigInteger maxInteger = new BigInteger(max);
-
-		BigInteger partitionKeySize = maxInteger.divide(new BigInteger("2"));
-
-		this.partitionBorder = partitionKeySize;
-
-//		BigInteger part1 = partitionKeySize;
-//		BigInteger part2 = part1.add(partitionKeySize);
-//		BigInteger part3 = part2.add(partitionKeySize);
-//		BigInteger part4 = maxInteger;
-
-//		partitionBorders.add(part1);
-//		partitionBorders.add(part2);
-//		partitionBorders.add(part3);
-//		partitionBorders.add(part4);
 	}
 
 	@Override
 	public Object getRoutingObject(EntryOperation<byte[], Item> entryOperation) {
 
+		if(!this.initialized) {
+			init();
+		}
+
 		BigInteger key = new BigInteger(1, entryOperation.getKey());
 
-		if(key.compareTo(this.partitionBorder) > 0) {
-			return new RoutingObject(0);
-		}
-		else {
-			return new RoutingObject(1);
+		for(int i = 0; i < this.partitionBorders.size(); i++) {
+			if(key.compareTo(this.partitionBorders.get(i)) >= 0) {
+
+				System.out.println(String.format(">> for key %s partition %s was used", key, this.partitionNames.get(i - 1)));
+				return new RoutingObject(this.partitionNames.get(i - 1));
+			}
 		}
 
-//		for(int i = 0; i < partitionBorders.size(); i++) {
-//			if(key.compareTo(partitionBorders.get(i)) < 0) {
-////				System.out.println("for key " + key + " partition " + i + " is being used");
-//				return new RoutingObject(i);
-//			}
-//		}
-//
-//		return new RoutingObject(3);
+		int index = this.partitionNames.size() - 1;
+
+		System.out.println(String.format(">> for key %s partition %s was used", key, this.partitionNames.get(index)));
+
+		return new RoutingObject(this.partitionNames.get(index));
+	}
+
+	private void init() {
+		this.regionAttributes = context.getBean("regionAttributes", RegionAttributes.class);
+
+		List<FixedPartitionAttributes> fixedPartitionAttributes =
+				this.regionAttributes.getPartitionAttributes().getFixedPartitionAttributes();
+
+		partitionNames = new ArrayList<>(fixedPartitionAttributes.size());
+
+		for (FixedPartitionAttributes fixedPartitionAttribute : fixedPartitionAttributes) {
+			partitionNames.add(fixedPartitionAttribute.getPartitionName());
+		}
+
+		byte [] max = new byte[] {127, 127, 127, 127, 127, 127, 127, 127, 127, 127};
+
+		BigInteger maxInteger = new BigInteger(max);
+
+		BigInteger partitionKeySize = maxInteger.divide(new BigInteger(String.valueOf(partitionNames.size())));
+
+		this.partitionBorders = new ArrayList<>(partitionNames.size());
+
+		BigInteger curBorder = new BigInteger("0");
+
+		for(int i = 0; i < partitionNames.size(); i++) {
+			curBorder = curBorder.add(partitionKeySize);
+			this.partitionBorders.add(curBorder);
+		}
+
+		this.partitionBorders.set(this.partitionNames.size() - 1, maxInteger);
+
+		System.out.println(">>> partition boarders:");
+		this.partitionBorders.forEach(System.out::println);
+
+		System.out.println(">>> partition names: ");
+		this.partitionNames.forEach(System.out::println);
+
+		this.initialized = true;
 	}
 
 	@Override
@@ -101,15 +134,15 @@ public class SortingPartitionResolver implements FixedPartitionResolver<byte[], 
 
 	public static class RoutingObject {
 
-		private final int partitionId;
+		private final String partitionId;
 
-		public RoutingObject(int value) {
+		public RoutingObject(String value) {
 			this.partitionId = value;
 		}
 
 		@Override
 		public int hashCode() {
-			return partitionId;
+			return partitionId.hashCode();
 		}
 	}
 }

@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: sort-worker-locator-service
+spec:
+  ports:
+  - port: 10334
+    name: locator
+  selector:
+    app: sort-worker-locator

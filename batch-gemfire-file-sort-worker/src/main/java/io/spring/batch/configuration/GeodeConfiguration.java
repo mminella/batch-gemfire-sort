@@ -16,6 +16,7 @@
 package io.spring.batch.configuration;
 
 import java.util.Collections;
+import java.util.UUID;
 
 import io.spring.batch.domain.Item;
 import io.spring.batch.geode.SortedFileWriterFunction;
@@ -29,7 +30,6 @@ import org.apache.geode.pdx.PdxReader;
 import org.apache.geode.pdx.PdxSerializer;
 import org.apache.geode.pdx.PdxWriter;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.gemfire.FixedPartitionAttributesFactoryBean;
@@ -46,7 +46,7 @@ import org.springframework.data.gemfire.function.config.EnableGemfireFunctions;
  * @author Michael Minella
  */
 @Configuration
-@PeerCacheApplication(name="SortClusterApplication", locators = "localhost[10334]")
+@PeerCacheApplication(name="SortClusterApplication")
 @EnablePdx(serializerBeanName = "pdxSerializer")
 @EnableGemfireFunctionExecutions(basePackageClasses = SortedFileWriterFunction.class)
 @EnableGemfireFunctions
@@ -90,17 +90,17 @@ public class GeodeConfiguration {
 	}
 
 	@Bean
-	public FixedPartitionAttributesFactoryBean fixedPartitionAttributes(@Value("${partition.name}") String partitionName) {
+	public FixedPartitionAttributesFactoryBean fixedPartitionAttributes() {
 
+		UUID partitionName = UUID.randomUUID();
 		System.out.println(">> partitionName = " + partitionName);
 
 		FixedPartitionAttributesFactoryBean fixedPartitionAttributes = new FixedPartitionAttributesFactoryBean();
 
-		fixedPartitionAttributes.setPartitionName(partitionName);
+		fixedPartitionAttributes.setPartitionName(partitionName.toString());
 		fixedPartitionAttributes.setPrimary(true);
 
 		return fixedPartitionAttributes;
-
 	}
 
 
