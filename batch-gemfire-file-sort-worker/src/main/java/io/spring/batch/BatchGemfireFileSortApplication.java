@@ -15,7 +15,7 @@ public class BatchGemfireFileSortApplication {
 	public static void main(String[] args) {
 
 		if(System.getenv("GEMFIRE_START-LOCATOR") != null) {
-			System.setProperty("gemfire.start-locator", "localhost[10334]");
+			System.setProperty("gemfire.start-locator", System.getenv("GEMFIRE_START-LOCATOR"));
 		}
 
 		List<String> newArgs = new ArrayList<>(args.length + 1);

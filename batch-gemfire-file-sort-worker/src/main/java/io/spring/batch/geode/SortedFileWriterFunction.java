@@ -20,18 +20,23 @@ import java.io.RandomAccessFile;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import io.spring.batch.domain.Item;
+import org.apache.geode.cache.FixedPartitionAttributes;
 import org.apache.geode.cache.Region;
 import org.apache.geode.cache.execute.FunctionContext;
 import org.apache.geode.cache.execute.RegionFunctionContext;
 import org.apache.geode.cache.partition.PartitionRegionHelper;
 
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.data.gemfire.function.annotation.GemfireFunction;
 import org.springframework.stereotype.Component;
 
@@ -39,9 +44,13 @@ import org.springframework.stereotype.Component;
  * @author Michael Minella
  */
 @Component
-public class SortedFileWriterFunction {
+public class SortedFileWriterFunction implements ApplicationContextAware {
 
 	private final String workingDirectory;
+
+	private Region items;
+
+	private ApplicationContext context;
 
 	public SortedFileWriterFunction(@Value("${spring.batch.working-directory}") String workingDirectory) {
 		this.workingDirectory = workingDirectory;
@@ -95,4 +104,26 @@ public class SortedFileWriterFunction {
 		buffer.clear();
 		channel.close();
 	}
+
+	@GemfireFunction
+	public Object getPartitionNames(FunctionContext functionContext) {
+		this.items = this.context.getBean(Region.class);
+
+		List<FixedPartitionAttributes> fixedPartitionAttributes =
+				this.items.getAttributes().getPartitionAttributes().getFixedPartitionAttributes();
+
+		List<String> partitionNames = new ArrayList<>(fixedPartitionAttributes.size());
+
+		for (FixedPartitionAttributes fixedPartitionAttribute : fixedPartitionAttributes) {
+			partitionNames.add(fixedPartitionAttribute.getPartitionName());
+		}
+
+		return partitionNames.get(0);
+	}
+
+	@Override
+	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+		this.context = applicationContext;
+	}
+
 }

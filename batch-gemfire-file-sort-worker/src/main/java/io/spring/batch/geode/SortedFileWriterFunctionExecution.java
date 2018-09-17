@@ -26,4 +26,7 @@ import org.springframework.data.gemfire.function.annotation.OnRegion;
 public interface SortedFileWriterFunctionExecution {
 
 	Object readLocalPartition() throws IOException;
+
+	Object getPartitionNames();
+
 }

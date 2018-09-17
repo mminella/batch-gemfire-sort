@@ -65,7 +65,7 @@ public class BatchConfiguration {
 	public FileDownloadTasklet fileDownloadTasklet(AmazonS3Client s3Client,
 			@Value("#{stepExecutionContext['fileName']}") String fileName,
 			@Value("${spring.batch.working-directory}") String workingDir,
-			@Value("${amazonProperties.input-bucket-name}") String bucketName) {
+			@Value("${amazonProperties.bucketName}") String bucketName) {
 
 		return new FileDownloadTasklet(s3Client, fileName, workingDir, bucketName);
 	}

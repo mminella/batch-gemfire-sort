@@ -93,11 +93,11 @@ public class GeodeConfiguration {
 	public FixedPartitionAttributesFactoryBean fixedPartitionAttributes() {
 
 		UUID partitionName = UUID.randomUUID();
-		System.out.println(">> partitionName = " + partitionName);
+		System.out.println(">> partitionName = " + partitionName.hashCode());
 
 		FixedPartitionAttributesFactoryBean fixedPartitionAttributes = new FixedPartitionAttributesFactoryBean();
 
-		fixedPartitionAttributes.setPartitionName(partitionName.toString());
+		fixedPartitionAttributes.setPartitionName(String.valueOf(partitionName.hashCode()));
 		fixedPartitionAttributes.setPrimary(true);
 
 		return fixedPartitionAttributes;

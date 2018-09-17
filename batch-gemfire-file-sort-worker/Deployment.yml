@@ -16,12 +16,19 @@ spec:
       - name: sort-worker
         image: mminella/batch-gemfire-file-sort-worker:0.0.1-SNAPSHOT
         imagePullPolicy: Always
+        resources:
+          requests:
+            memory: "1G"
         ports:
         - containerPort: 8080
           name: server
+        - containerPort: 1024
+          name: health
         env:
         - name: SPRING_DATA_GEMFIRE_LOCATORS
-          value: "10.35.254.62[10334]"
+          value: "sort-worker-locator-service[10334]"
+        - name: SPRING_DATA_GEMFIRE_NAME
+          value: "blah"
         - name: SPRING_APPLICATION_NAME
           valueFrom:
             configMapKeyRef:

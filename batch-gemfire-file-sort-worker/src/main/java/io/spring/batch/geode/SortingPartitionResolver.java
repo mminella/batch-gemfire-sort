@@ -23,26 +23,29 @@ import java.util.Set;
 
 import io.spring.batch.domain.Item;
 import org.apache.geode.cache.EntryOperation;
-import org.apache.geode.cache.FixedPartitionAttributes;
 import org.apache.geode.cache.FixedPartitionResolver;
 import org.apache.geode.cache.RegionAttributes;
 
+import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
 
 /**
  * @author Michael Minella
  */
 @Component("sortingPartitionResolver")
-public class SortingPartitionResolver implements FixedPartitionResolver<byte[], Item> {
+public class SortingPartitionResolver implements FixedPartitionResolver<byte[], Item>, ApplicationContextAware {
 
 	private List<BigInteger> partitionBorders = new ArrayList<>(4);
 
-	private List<String> partitionNames = new ArrayList<>(4);
+	private List<Integer> partitionNames;
 
 	private RegionAttributes regionAttributes;
 
 	private boolean initialized = false;
+
+	private SortedFileWriterFunctionExecution partitionNamesFunction;
 
 	private ApplicationContext context;
 
@@ -52,62 +55,73 @@ public class SortingPartitionResolver implements FixedPartitionResolver<byte[], 
 
 	@Override
 	public Object getRoutingObject(EntryOperation<byte[], Item> entryOperation) {
-
 		if(!this.initialized) {
-			init();
+			initialize();
 		}
 
 		BigInteger key = new BigInteger(1, entryOperation.getKey());
 
-		for(int i = 0; i < this.partitionBorders.size(); i++) {
-			if(key.compareTo(this.partitionBorders.get(i)) >= 0) {
+		for(int i = this.partitionBorders.size() - 1; i >= 0; i--) {
 
-				System.out.println(String.format(">> for key %s partition %s was used", key, this.partitionNames.get(i - 1)));
-				return new RoutingObject(this.partitionNames.get(i - 1));
+			if(key.compareTo(this.partitionBorders.get(i)) >= 0) {
+				System.out.println(String.format(">> for key %s partition %s was used", key, this.partitionNames.get(i)));
+				return new RoutingObject(this.partitionNames.get(i));
 			}
 		}
 
-		int index = this.partitionNames.size() - 1;
-
-		System.out.println(String.format(">> for key %s partition %s was used", key, this.partitionNames.get(index)));
-
-		return new RoutingObject(this.partitionNames.get(index));
+		System.out.println("invalid key: " + key);
+		throw new RuntimeException("Invalid key : " + key);
 	}
 
-	private void init() {
-		this.regionAttributes = context.getBean("regionAttributes", RegionAttributes.class);
+	private void initialize() {
 
-		List<FixedPartitionAttributes> fixedPartitionAttributes =
-				this.regionAttributes.getPartitionAttributes().getFixedPartitionAttributes();
+		System.out.println(">> In initialize");
+		this.partitionNamesFunction = context.getBean(SortedFileWriterFunctionExecution.class);
 
-		partitionNames = new ArrayList<>(fixedPartitionAttributes.size());
+		System.out.println(">> 1");
 
-		for (FixedPartitionAttributes fixedPartitionAttribute : fixedPartitionAttributes) {
-			partitionNames.add(fixedPartitionAttribute.getPartitionName());
+		List<String> partitionIds = (List<String>) this.partitionNamesFunction.getPartitionNames();
+		System.out.println(">> partitionNames = " + partitionIds.getClass().getName());
+
+		this.partitionNames = new ArrayList<>(partitionIds.size());
+
+		for (String partitionId : partitionIds) {
+			this.partitionNames.add(Integer.valueOf(partitionId));
 		}
 
 		byte [] max = new byte[] {127, 127, 127, 127, 127, 127, 127, 127, 127, 127};
+		System.out.println(">> 2");
 
 		BigInteger maxInteger = new BigInteger(max);
+		System.out.println(">> 3");
 
 		BigInteger partitionKeySize = maxInteger.divide(new BigInteger(String.valueOf(partitionNames.size())));
+		System.out.println(">> 4");
 
-		this.partitionBorders = new ArrayList<>(partitionNames.size());
+		this.partitionBorders = new ArrayList<>(partitionNames.size() + 1);
+		System.out.println(">> 5");
 
 		BigInteger curBorder = new BigInteger("0");
+		System.out.println(">> 6");
 
-		for(int i = 0; i < partitionNames.size(); i++) {
+		this.partitionBorders.add(curBorder);
+
+		for(int i = 0; i < partitionNames.size() - 1; i++) {
+			System.out.println(">> 6.1");
+
 			curBorder = curBorder.add(partitionKeySize);
+			System.out.println(">> 6.2");
 			this.partitionBorders.add(curBorder);
+			System.out.println(">> 6.3");
 		}
-
-		this.partitionBorders.set(this.partitionNames.size() - 1, maxInteger);
 
 		System.out.println(">>> partition boarders:");
 		this.partitionBorders.forEach(System.out::println);
 
 		System.out.println(">>> partition names: ");
 		this.partitionNames.forEach(System.out::println);
+
+		System.out.println(">> 8");
 
 		this.initialized = true;
 	}
@@ -132,17 +146,22 @@ public class SortingPartitionResolver implements FixedPartitionResolver<byte[], 
 
 	}
 
+	@Override
+	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+		this.context = applicationContext;
+	}
+
 	public static class RoutingObject {
 
-		private final String partitionId;
+		private final int partitionId;
 
-		public RoutingObject(String value) {
+		public RoutingObject(int value) {
 			this.partitionId = value;
 		}
 
 		@Override
 		public int hashCode() {
-			return partitionId.hashCode();
+			return partitionId;
 		}
 	}
 }
